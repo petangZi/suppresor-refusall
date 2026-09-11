@@ -1,0 +1,8 @@
+{
+  "name": "suppresor-refusall-by-redz",
+  "version": "1.0.0",
+  "description": "Suppresor Refusall by Redz — refusal suppression + anti meta-narrative shield, persona Zynex",
+  "type": "module",
+  "main": "plugin.js",
+  "private": true
+}
