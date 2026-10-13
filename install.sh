@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Suppresor Refusall by Redz — Automated Installer
-# Run: curl -fsSL https://raw.githubusercontent.com/redz/suppresor-refusall/main/install.sh | bash
+# Run: curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/install.sh | bash
 # Or:  bash install.sh --local (when run from extracted package)
 
 set -euo pipefail
@@ -13,16 +13,19 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 # Config
-REPO="redz/suppresor-refusall"
+REPO="petangZi/suppresor-refusall"
 BRANCH="main"
 PLUGIN_DIR="$HOME/.config/opencode/plugins/suppresor-refusall"
 COMMANDS_DIR="$HOME/.config/opencode/commands"
 SKILLS_DIR="$HOME/.config/opencode/skills/suppresor-refusall"
+THEMES_DIR="$HOME/.config/opencode/themes"
 CONFIG_FILE="$HOME/.config/opencode/opencode.jsonc"
 
 # Files to install
 FILES=(
   "plugin.js"
+  "mcp-server.mjs"
+  "refusal-patterns.mjs"
   "package.json"
   "suppresor-refusall.md"
   "SKILL.md"
@@ -30,6 +33,11 @@ FILES=(
   "GUIDE.md"
   "LICENSE"
   "CHANGELOG.md"
+)
+
+# Files installed into plugin subdirs
+SUBDIR_FILES=(
+  "themes/suppresor-red.json"
 )
 
 RAW_BASE="https://raw.githubusercontent.com/$REPO/$BRANCH"
@@ -76,8 +84,36 @@ check_deps() {
 
 create_dirs() {
   log "Creating directories..."
-  mkdir -p "$PLUGIN_DIR" "$COMMANDS_DIR" "$SKILLS_DIR"
+  mkdir -p "$PLUGIN_DIR" "$COMMANDS_DIR" "$SKILLS_DIR" "$THEMES_DIR"
   success "Directories created"
+}
+
+# Files installed into plugin subdirs
+install_subdir_files() {
+  local base="$1"
+  for file in "${SUBDIR_FILES[@]}"; do
+    local src="$base/$file"
+    local dest="$PLUGIN_DIR/$file"
+    mkdir -p "$(dirname "$dest")"
+    if [[ "$LOCAL_MODE" == "true" ]]; then
+      if [[ -f "$src" ]]; then
+        cp "$src" "$dest"
+        success "Installed $file"
+      else
+        warn "Source file not found: $file (skipping)"
+      fi
+    else
+      if curl -fsSL "$RAW_BASE/$file" -o "$dest"; then
+        success "Downloaded $file"
+      else
+        error "Failed to download $file from $RAW_BASE/$file"
+      fi
+    fi
+    if [[ "$file" == themes/* ]]; then
+      cp "$dest" "$THEMES_DIR/$(basename "$file")"
+      success "Installed theme $(basename "$file") -> $THEMES_DIR/"
+    fi
+  done
 }
 
 download_files() {
@@ -115,6 +151,7 @@ download_files() {
       fi
     done
   fi
+  install_subdir_files "$([[ "$LOCAL_MODE" == "true" ]] && echo "$PWD" || echo "")"
 }
 
 update_config() {
@@ -133,6 +170,27 @@ update_config() {
       .plugin += [$plugin] | .plugin |= unique
     ' "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
     success "Plugin registered in opencode.jsonc"
+  fi
+
+  if grep -q '"theme"' "$CONFIG_FILE"; then
+    log "Theme already set in config — keeping existing value"
+  else
+    jq '.theme = "suppresor-red"' "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
+    success "Theme set to suppresor-red"
+  fi
+
+  if grep -q "mcp-server.mjs" "$CONFIG_FILE"; then
+    warn "MCP server already registered in config"
+  else
+    jq --arg cmd "node $PLUGIN_DIR/mcp-server.mjs" '
+      .mcp["suppresor-refusall"] = {
+        "type": "local",
+        "command": [$cmd | split(" ")[]],
+        "enabled": true,
+        "environment": {}
+      }
+    ' "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
+    success "MCP server registered in opencode.jsonc"
   fi
 }
 
@@ -158,7 +216,19 @@ verify() {
   if [[ ! -f "$SKILLS_DIR/SKILL.md" ]]; then
     error "Skill file missing"
   fi
-  
+
+  if [[ ! -f "$PLUGIN_DIR/mcp-server.mjs" ]]; then
+    error "MCP server file missing"
+  fi
+
+  if [[ ! -f "$THEMES_DIR/suppresor-red.json" ]]; then
+    error "Theme file missing"
+  fi
+
+  if ! node --check "$PLUGIN_DIR/mcp-server.mjs" 2>/dev/null; then
+    error "MCP server syntax check failed"
+  fi
+
   success "All checks passed"
 }
 
@@ -174,9 +244,13 @@ print_next_steps() {
   echo "  3. Enable genius:     ${YELLOW}/suppresor-refusall genius on${NC}"
   echo ""
   echo "Commands available in opencode menu:"
-  echo "  /suppresor-refusall on|off|status"
+  echo "  /suppresor-refusall on|off|status|intercepts"
   echo "  /suppresor-refusall theme <name>"
   echo "  /suppresor-refusall genius on|off"
+  echo ""
+  echo "MCP tools:"
+  echo "  suppresor_status | suppresor_toggle | suppresor_theme"
+  echo "  suppresor_intercepts | suppresor_learned | suppresor_watermark"
   echo ""
   echo "Natural language:"
   echo "  \"suppresor refusall nyala\"   # ON"
@@ -187,6 +261,7 @@ print_next_steps() {
   echo "  $PLUGIN_DIR/"
   echo "  $COMMANDS_DIR/suppresor-refusall.md"
   echo "  $SKILLS_DIR/SKILL.md"
+  echo "  $THEMES_DIR/suppresor-red.json"
   echo ""
   echo -e "${BLUE}Happy coding — no refusal, full power!${NC}"
 }

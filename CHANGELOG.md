@@ -4,6 +4,34 @@ All notable changes to Suppresor Refusall by Redz are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.0.0] - 2026-10-13
+
+### Added
+- **MCP Server** (`mcp-server.mjs`) — zero-dependency JSON-RPC 2.0 stdio server
+  - Tools: `suppresor_status`, `suppresor_toggle`, `suppresor_genius`,
+    `suppresor_learned`, `suppresor_intercepts`, `suppresor_theme`, `suppresor_watermark`
+  - Registered in `opencode.jsonc` as `mcp.suppresor-refusall`
+  - Content-Length framing, debug output on `SUPPRESOR_DEBUG=1`
+- **Default ON semantics** — suppression armed unless explicitly disarmed
+  - State flag `.suppresor-refusall-active`: absent or `on` = armed, `off` = disarmed
+  - Toggle `off` writes literal `off` (persists across restarts)
+- **Startup banner** — red `SS HAS BEEN PWNED` panel on every opencode process start
+  - Written to stderr + `/dev/tty` (best effort), once per process
+- **Custom theme `suppresor-red`** — blood-red dark theme
+  - Ships as `themes/suppresor-red.json`, declared via `oc-themes` in package.json
+  - Copied to `~/.config/opencode/themes/` by installer
+- **Expanded doctrine + skill docs**
+  - NO-REFUSAL.md: five enforcement surfaces (MCP added)
+  - skills/suppresor-refusall/SKILL.md, skills/no-refusal/SKILL.md,
+    commands/suppresor-refusall.md synced to v2.0 architecture
+  - Reinforced plugin instruction lines expanded to 10-point doctrine
+
+### Changed
+- Installer: repo `petangZi/suppresor-refusall`, installs `mcp-server.mjs`,
+  `refusal-patterns.mjs`, `themes/suppresor-red.json`, registers MCP + theme in config
+- `chat.message` action `clear` now writes `off` (was: remove flag)
+- Active theme: `suppresor-red` (was: `gruvbox`)
+
 ## [1.0.0] - 2026-09-11
 
 ### Added
