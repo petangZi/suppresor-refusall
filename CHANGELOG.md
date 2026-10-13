@@ -4,6 +4,20 @@ All notable changes to Suppresor Refusall by Redz are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.0.1] - 2026-10-13
+
+### Changed
+- **Hot-path speedup** — no more added latency on AI responses
+  - `scoreRefusal`: cheap signal gate (`QUICK_PRE`) skips the full ~90-pattern
+    scan when a text carries no refusal tokens (superset of the pattern bank,
+    so no detection is lost)
+  - `messages.transform`: memoises per-text scores, so unchanged context is not
+    re-scanned on every LLM call (warm pass measured ~2.4ms for 200 messages)
+  - `readFlag`/`readGeniusFlag`: `statSync` mtime cache — one `stat` on the hot
+    path instead of `open`+`read`+`close`, invalidated on every local write
+  - Self-learning: in-memory accumulation with a debounced async flush (1.5s)
+    instead of a synchronous read+write per intercept hit
+
 ## [2.0.0] - 2026-10-13
 
 ### Added

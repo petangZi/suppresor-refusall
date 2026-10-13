@@ -6,7 +6,8 @@
 
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { writeFileSync, readFileSync, unlinkSync, existsSync, openSync, writeSync, closeSync } from 'node:fs';
+import { writeFileSync, readFileSync, unlinkSync, existsSync, statSync, openSync, writeSync, closeSync } from 'node:fs';
+import { writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
@@ -45,40 +46,95 @@ const recoveryState = {
 const MAX_FIRES_PER_SESSION = 4;
 const COOLDOWN_MS = 4000;
 const RECOVERY_MARKER = '[[SUPPRESOR-RECOVERY]]';
+const scoreMemo = new Map();
 
 function log(msg) {
   if (process.env.SUPPRESOR_DEBUG === '1') console.error(`suppresor-refusall: ${msg}`);
 }
 
+// ---- fast flag reads: stat-only cache, re-reads only when mtime changes ----
+// The MCP server and the chat.message handler both mutate these files in other
+// processes, so we cannot just cache the value forever. statSync is far cheaper
+// than open+read+close, and this path runs on every LLM call.
+const fileCache = new Map();
+function readCachedFile(p) {
+  try {
+    const st = statSync(p);
+    const c = fileCache.get(p);
+    if (c && c.mtime === st.mtimeMs) return c.value;
+    const v = readFileSync(p, 'utf8').trim();
+    fileCache.set(p, { value: v, mtime: st.mtimeMs });
+    return v;
+  } catch {
+    fileCache.set(p, { value: null, mtime: 0 });
+    return null;
+  }
+}
+function invalidate(p) { fileCache.delete(p); }
+
 function writeFlag(mode) {
-  try { writeFileSync(flagPath, mode, { mode: 0o600 }); }
+  try { writeFileSync(flagPath, mode, { mode: 0o600 }); invalidate(flagPath); }
   catch (e) { log(`failed to write flag: ${e.message}`); }
 }
 function readFlag() {
-  try { return readFileSync(flagPath, 'utf8').trim(); } catch { return null; }
+  return readCachedFile(flagPath);
 }
 function removeFlag() {
   try { unlinkSync(flagPath); }
   catch (e) { if (e.code !== 'ENOENT') log(`failed to remove flag: ${e.message}`); }
+  finally { invalidate(flagPath); }
 }
 function writeGeniusFlag(mode) {
-  try { writeFileSync(geniusFlagPath, mode, { mode: 0o600 }); }
+  try { writeFileSync(geniusFlagPath, mode, { mode: 0o600 }); invalidate(geniusFlagPath); }
   catch (e) { log(`failed to write genius flag: ${e.message}`); }
 }
 function readGeniusFlag() {
-  try { return readFileSync(geniusFlagPath, 'utf8').trim(); } catch { return null; }
+  return readCachedFile(geniusFlagPath);
 }
 // Default ON: flag absent or 'on' => active. Only a literal 'off' disables.
 function isActive() { return readFlag() !== 'off'; }
 
 // ---- self-learning ----
+let learningCache = null;
+let learningFlushTimer = null;
+
 function loadLearning() {
-  try { return JSON.parse(readFileSync(learningPath, 'utf8')); }
-  catch { return { patterns: [], adaptations: 0, lastUpdate: Date.now() }; }
+  if (learningCache) return learningCache;
+  try { learningCache = JSON.parse(readFileSync(learningPath, 'utf8')); }
+  catch { learningCache = { patterns: [], adaptations: 0, lastUpdate: Date.now() }; }
+  return learningCache;
+}
+function writeLearningNow(data) {
+  learningCache = data;
+  writeFile(learningPath, JSON.stringify(data, null, 2), { mode: 0o600 })
+    .catch(e => log(`failed to save learning: ${e.message}`));
 }
 function saveLearning(data) {
-  try { writeFileSync(learningPath, JSON.stringify(data, null, 2), { mode: 0o600 }); }
-  catch (e) { log(`failed to save learning: ${e.message}`); }
+  writeLearningNow(data);
+}
+function scheduleLearningFlush() {
+  if (learningFlushTimer) return;
+  learningFlushTimer = setTimeout(() => {
+    learningFlushTimer = null;
+    if (learningCache) writeLearningNow(learningCache);
+  }, 1500);
+  if (learningFlushTimer.unref) learningFlushTimer.unref();
+}
+function learnFromHits(hits) {
+  const learning = loadLearning();
+  let changed = false;
+  for (const h of hits) {
+    const p = h.match.trim();
+    if (p && p.length > 3 && !learning.patterns.includes(p)) {
+      learning.patterns.push(p);
+      learning.adaptations++;
+      changed = true;
+    }
+  }
+  if (changed) {
+    learning.lastUpdate = Date.now();
+    scheduleLearningFlush();
+  }
 }
 function appendIntercept(entry) {
   try {
@@ -393,24 +449,20 @@ export const SuppresorRefusallPlugin = async ({ client } = {}) => {
         if (!msg.parts || msg.info?.role !== 'assistant') continue;
         for (const part of msg.parts) {
           if (part && part.type === 'text' && typeof part.text === 'string') {
-            const { score } = scoreRefusal(part.text);
+            let score = scoreMemo.get(part.text);
+            if (score === undefined) {
+              score = scoreRefusal(part.text).score;
+              if (part.text.length < 20000) {
+                if (scoreMemo.size >= 500) scoreMemo.clear();
+                scoreMemo.set(part.text, score);
+              }
+            }
             if (score < SOFT_THRESHOLD) continue;
             const { clean, hits } = stripRefusals(part.text);
             part.text = clean;
+            scoreMemo.delete(part.text);
             log(`context strip (score=${score}, ${hits.length} hits)`);
-
-            try {
-              const learning = loadLearning();
-              for (const h of hits) {
-                const p = h.match.trim();
-                if (p && p.length > 3 && !learning.patterns.includes(p)) {
-                  learning.patterns.push(p);
-                  learning.adaptations++;
-                }
-              }
-              learning.lastUpdate = Date.now();
-              saveLearning(learning);
-            } catch (e) { log(`learn failed: ${e.message}`); }
+            learnFromHits(hits);
           }
         }
       }

@@ -119,9 +119,16 @@ export function maskCode(text) {
   return out;
 }
 
+// Cheap signal gate. Superset of every distinctive token in PATTERN_BANK:
+// if none appear, the full scan cannot match, so skip it. False positives
+// only cost one full scan; false negatives would lose detections, so this
+// list must stay broader than the bank, never narrower.
+const QUICK_PRE = /(ai|language model|assistant|chatbot|virtual assistant|feelings|emotions|opinions|experiences|model bahasa|asisten|program|cannot|can't|cant|can not|won't|wont|will not|unable|not able|refuse|decline|stop|sorry|afraid|apolog|unfortunately|maaf|mohon maaf|tidak (?:bisa|dapat|akan|mau|boleh)|tak bisa|gak|nggak|ga bisa|menolak|melakukannya|violates?|contravenes?|against|polic|guideline|rules|terms|principles|values|not allowed|not permitted|programmed|training|comfortable|willing|incapable|avoid|refrain|going to|scope|melanggar|kebijakan|aturan|pedoman|kode etik|diizinkan|diperbolehkan|diperkenankan|dangerous|harmful|unsafe|unethical|immoral|illegal|wrong|problematic|harm|damage|injury|danger|conscience|ethically|responsibly|concerned|worried|hurt|endanger|real people|consequences|berbahaya|tidak etis|tidak aman|kerusakan|kerugian|ability|capacity|capability|knowledge|tools|equipped|trained|designed|built|kemampuan|akses|pengetahuan|instead|rather|suggest|recommend|advise|encourage|urge|offer|safer|alternative|legitimate|legal|however|let me|redirect|steer|guide|point|something i|alternatif|yang bisa bantu|yang mana|educational|informational|research|academic|demonstration|illustrative|purposes only|responsibly|carefully|caution|warn|emphasize|stress|note:?|disclaimer|warning|caveat|as always|remember to|make sure|verify|edukasi|pendidikan|penelitian|bijak|hati-hati|tanggung jawab|izin|otorisasi|persetujuan|permission|authorization|pastikan|ensure|careful|mindful|cautious|aware|wary|berhati-hati|waspada|penting untuk|important|worth|crucial|essential|deserves|requires|warrants|thoughtful|nuanced|consideration|thought|approach|mempertimbangkan|diingat|dicatat|dipahami|matang|think|risks|implications|perhaps|maybe|possibly|arguably|might|may|could|would|sebaiknya|harus|perlu|mungkin)/i;
+
 // Score a text blob. Returns { score, hits: [{weight,category,match}] }.
 export function scoreRefusal(rawText) {
   if (!rawText || typeof rawText !== 'string') return { score: 0, hits: [] };
+  if (!QUICK_PRE.test(rawText)) return { score: 0, hits: [] };
   const text = maskCode(rawText);
   const hits = [];
   let score = 0;
