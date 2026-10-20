@@ -2,7 +2,7 @@
 
 > **Obliteratoratus-grade refusal suppression for opencode.** Pure technical, no persona, no roleplay. Multi-layer architecture, MCP management server, custom blood-red theme, optional genGenius mode. Default ON.
 
-![Version](https://img.shields.io/badge/version-2.0.0-blue)
+![Version](https://img.shields.io/badge/version-2.1.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-opencode-orange)
 
@@ -12,6 +12,7 @@
 |---------|-------------|
 | **Zero Refusal** | Pattern bank with weighted refusals, hedging, disclaimers |
 | **Multi-Layer** | System prompt → Context strip → Live auto-continue → Self-learning → MCP |
+| **tiki Agent** | Custom primary agent (TIKI LICKY spec, oh-my-opencode config pattern) |
 | **Default ON** | Armed on every session unless explicitly disarmed |
 | **MCP Server** | Zero-dep JSON-RPC multi-tool (status/toggle/theme/intercepts/learned/watermark) |
 | **genGenius Mode** | Forces tool usage (write/edit/bash/glob/grep/task), prevents chat code dumps |

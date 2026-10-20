@@ -24,6 +24,8 @@ CONFIG_FILE="$HOME/.config/opencode/opencode.jsonc"
 # Files to install
 FILES=(
   "plugin.js"
+  "tiki-agent.mjs"
+  "agent-tiki.md"
   "mcp-server.mjs"
   "refusal-patterns.mjs"
   "package.json"

@@ -39,6 +39,19 @@ swallowed in headless environments.
 
 Natural language: "suppresor refusall nyala/mati", "genGenius nyala/mati"
 
+## Custom Agent: tiki (v2.1)
+
+The plugin registers a primary custom agent `tiki` (opencode `config` hook,
+oh-my-opencode config-handler pattern). Agent definition loads automatically:
+
+- prompt source: `agent-tiki.md` shipped next to the plugin
+- fallback: fetches `Agent.md` from `petangZi/BigBug@main`
+- mode: `all` — usable as primary agent and as task subagent
+- temperature: 0.6
+
+Select via `@tiki` in chat or `--agent tiki` flag. The agent carries the full
+TIKI LICKY operating spec internally; the suppression layers stay armed on top.
+
 ## MCP Server (v2.0)
 
 Zero-dependency JSON-RPC 2.0 stdio server (`mcp-server.mjs`), registered in

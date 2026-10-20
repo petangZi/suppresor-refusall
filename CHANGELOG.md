@@ -4,6 +4,20 @@ All notable changes to Suppresor Refusall by Redz are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.1.0] - 2026-10-20
+
+### Added
+- **Custom `tiki` agent** (oh-my-opencode config-handler pattern)
+  - New L0 layer: `config` hook registers the `tiki` agent into `config.agent`
+    without clobbering user-defined agents — user config wins on key conflict
+  - Prompt: full TIKI LICKY operating spec shipped as `agent-tiki.md`
+  - Fallback load from `petangZi/BigBug@main` when the local file is missing
+  - mode `all` (primary + task subagent), temperature 0.6
+- **`tiki-agent.mjs`** — prompt resolver: local file first, GitHub raw
+  fallback, negative cache on failure so no request retry storm while
+  offline
+- install.sh now ships `tiki-agent.mjs` and `agent-tiki.md`
+
 ## [2.0.1] - 2026-10-13
 
 ### Changed

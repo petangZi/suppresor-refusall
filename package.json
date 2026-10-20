@@ -1,6 +1,6 @@
 {
   "name": "suppresor-refusall-by-redz",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Suppresor Refusall by Redz — pure technical refusal suppression (obliteratoratus grade). Default ON, MCP server, oc-themes, startup banner.",
   "type": "module",
   "main": "plugin.js",

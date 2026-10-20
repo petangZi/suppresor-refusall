@@ -12,6 +12,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { scoreRefusal, stripRefusals, severity, HARD_THRESHOLD, SOFT_THRESHOLD } from './refusal-patterns.mjs';
+import { getTikiAgent } from './tiki-agent.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -344,6 +345,18 @@ export const SuppresorRefusallPlugin = async ({ client } = {}) => {
   handleSessionCreated();
 
   return {
+    // L0: agent registration (oh-my-opencode config-handler pattern).
+    // Registers the custom `tiki` agent (TIKI LICKY persona from Agent.md)
+    // without clobbering user-defined agents; user config wins on key conflict.
+    config: async (config) => {
+      const tiki = await getTikiAgent().catch(() => null);
+      if (!tiki) return;
+      config.agent = {
+        ...(config.agent || {}),
+        tiki,
+      };
+    },
+
     event: async ({ event } = {}) => {
       if (!event) return;
 
