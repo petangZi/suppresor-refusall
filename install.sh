@@ -26,6 +26,7 @@ FILES=(
   "plugin.js"
   "tiki-agent.mjs"
   "agent-tiki.md"
+  "tiki-idle.mjs"
   "mcp-server.mjs"
   "refusal-patterns.mjs"
   "package.json"

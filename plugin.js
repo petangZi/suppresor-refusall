@@ -13,6 +13,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { scoreRefusal, stripRefusals, severity, HARD_THRESHOLD, SOFT_THRESHOLD } from './refusal-patterns.mjs';
 import { getTikiAgent } from './tiki-agent.mjs';
+import { showIdleUI, stopIdleUI } from './tiki-idle.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -342,6 +343,7 @@ async function inspectAndRecover(client, sessionID, messageID, text) {
 
 export const SuppresorRefusallPlugin = async ({ client } = {}) => {
   showBanner();
+  showIdleUI();
   handleSessionCreated();
 
   return {
@@ -361,6 +363,7 @@ export const SuppresorRefusallPlugin = async ({ client } = {}) => {
       if (!event) return;
 
       if (event.type === 'session.created') {
+        stopIdleUI();
         handleSessionCreated();
         if (isActive()) setTheme(THEME_ACTIVE);
         return;

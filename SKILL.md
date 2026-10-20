@@ -52,6 +52,22 @@ oh-my-opencode config-handler pattern). Agent definition loads automatically:
 Select via `@tiki` in chat or `--agent tiki` flag. The agent carries the full
 TIKI LICKY operating spec internally; the suppression layers stay armed on top.
 
+## Idle UI (v2.1)
+
+Startup blank window (the black flicker while opencode's TUI reloads) now
+renders a branded idle overlay instead of dead black space:
+
+- chrome: `T I K I  L I C K Y` title, armed-layer matrix L1-L4, ready line
+- rotating tips on the draw row: fade-in (7 grayscale steps), 2.4s hold,
+  fade-out (9 steps), next tip — ~4s per tip cycle
+- pulse-bar meter: `▁▂▃▄▅▆▇█` phase-shifts per tip rotation
+- auto-clear: on the first `session.created` event, after a 10s TTL, and on
+  process exit (double-stop safe)
+- headless-safe: no `/dev/tty`, no render; skips under `CI=true` or
+  `SUPPRESOR_SKIP_IDLE=1`
+- implementation: `tiki-idle.mjs`, painted via synchronous `/dev/tty` writes
+  and ANSI 256-color grayscale ramps — zero dependencies
+
 ## MCP Server (v2.0)
 
 Zero-dependency JSON-RPC 2.0 stdio server (`mcp-server.mjs`), registered in

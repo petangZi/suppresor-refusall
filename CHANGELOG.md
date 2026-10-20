@@ -4,6 +4,22 @@ All notable changes to Suppresor Refusall by Redz are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.2.0] - 2026-10-20
+
+### Added
+- **Idle UI overlay** (`tiki-idle.mjs`)
+  - Fills the startup blank window (TUI reload black flicker) with a branded
+    TIKI LICKY welcome chrome: armed-layer matrix L1-L4, ready line, pulse-bar
+    meter
+  - Rotating tips below chrome: ANSI 256 grayscale fade-in (7 steps) → 2.4s
+    hold → fade-out (9 steps) → next tip, ~4s per cycle
+  - Auto-clear on first `session.created`, on 10s TTL, and on process exit
+    (double-stop safe; exit-hook unbound on stop)
+  - Headless-safe: no `/dev/tty` write when absent; skipped under `CI=true`
+    and `SUPPRESOR_SKIP_IDLE=1`
+- plugin.js: `showIdleUI()` on plugin activation, `stopIdleUI()` on
+  `session.created`
+
 ## [2.1.0] - 2026-10-20
 
 ### Added
