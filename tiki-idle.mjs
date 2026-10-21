@@ -1,41 +1,68 @@
-// Tiki idle UI — Part of Suppresor Refusall by Redz
-// Paints a welcome + rotating-tips idle overlay into the startup blank window
-// (the moment opencode takes to reload its TUI). Auto-clears via TTL, on
-// first session.created, and on process exit. Headless-safe: no /dev/tty,
-// no write. Invisible watermark: 0x54494b495445414d5245445445414d
+// Tiki idle UI (full-screen) — Part of Suppresor Refusall by Redz
+// Fills the opencode startup blank window with a full-screen branded idle
+// screen: gradient ANSI-shadow logo, live layer matrix, boot progress bar,
+// rotating tip carousel, live clock, watermark footer. Auto-clears via TTL,
+// on first session.created, and on process exit. Headless-safe.
+// Invisible watermark: 0x54494b495445414d5245445445414d
 
 import { openSync, writeSync } from 'node:fs';
 
 const RST = '\x1b[0m';
-const RED = (s) => '\x1b[38;5;196m' + s + RST;
-const DIMRED = (s) => '\x1b[38;5;124m' + s + RST;
-const ORANGE = (s) => '\x1b[38;5;208m' + s + RST;
-const G = (n) => (s) => `\x1b[38;5;${n}m` + s + RST;
+const c = (n) => (s) => `\x1b[38;5;${n}m` + s + RST;
+const RED = c(196);
+const HOT = c(160);
+const MID = c(124);
+const DIM = c(88);
+const DEEP = c(52);
+const ORANGE = c(208);
+const WHITE = c(231);
+const G = c(233);
+const GG = c(236);
+const BG = c(234);
 
-const FADE_IN = [232, 236, 240, 244, 248, 252, 255];
-const FADE_OUT = [255, 252, 249, 246, 243, 240, 237, 234, 232];
-const TIP_FADE_STEP_MS = 80;
-const TIP_HOLD_MS = 2400;
-const TTL_MS = 10000;
-const TIP_ROW = 12;
+const FRAME_MS = 150;
+const TTL_MS = 11000;
+const TIP_HOLD_TICKS = 14;
+
+const LOGO = [
+  '████████╗██╗██╗  ██╗██╗    ██╗     ██╗ ██████╗██╗  ██╗██╗   ██╗',
+  '╚══██╔══╝██║██║ ██╔╝██║    ██║     ██║██╔════╝██║ ██╔╝╚██╗ ██╔╝',
+  '   ██║   ██║█████╔╝ ██║    ██║     ██║██║     █████╔╝  ╚████╔╝',
+  '   ██║   ██║██╔═██╗ ██║    ██║     ██║██║     ██╔═██╗   ╚██╔╝',
+  '   ██║   ██║██║  ██╗██║    ███████╗██║╚██████╗██║  ██╗   ██║',
+  '   ╚═╝   ╚═╝╚═╝  ╚═╝╚═╝    ╚══════╝╚═╝ ╚═════╝╚═╝  ╚═╝   ╚═╝',
+];
+
+const LOGO_SHADES = [RED, HOT, MID, DIM, DEEP, DEEP];
 
 const TIPS = [
-  ['/suppresor-refusall status', 'cek layer suppression + watermark'],
-  ['@tiki <request>', 'rute langsung ke TIKI LICKY (persona + suppression armed)'],
+  ['@tiki <request>', 'rute langsung ke TIKI LICKY — persona + suppression armed'],
+  ['/suppresor-refusall status', 'cek layer suppression + watermark install'],
   ['/suppresor-refusall genius on', 'paksa tool usage — anti chat-dump mode'],
-  ['suppresor_learned (MCP)', 'lihat pattern bank hasil self-learning L4'],
+  ['suppresor_learned (MCP)', 'pattern bank hasil self-learning L4'],
   ['/suppresor-refusall off', 'disarm sementara — state tetap persists'],
-  ['"suppresor refusall nyala"', 'natural language toggle (id) works too'],
-  ['L1-L4 armed by default', 'inject · strip · auto-continue · learning'],
+  ['"suppresor refusall nyala"', 'natural language toggle (id) jalan juga'],
   ['suppresor_intercepts (MCP)', 'audit log percobaan refusal yang kena strip'],
+  ['@oracle / @librarian / @explore', 'delegate chains untuk task berat'],
 ];
+
+const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+const PULSE = ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'];
+const FADE_IN = [232, 236, 240, 244, 248, 252, 255];
+const FADE_OUT = [255, 252, 249, 246, 243, 240, 237, 234, 232];
 
 const idleState = {
   fd: null,
   timers: [],
   running: false,
+  tick: 0,
   tipIndex: 0,
-  exitHookBound: false,
+  tipPhase: 'in',
+  tipStep: 0,
+  tipHold: 0,
+  height: 0,
+  width: 80,
+  exitHook: null,
 };
 
 function openTty() {
@@ -66,76 +93,116 @@ function clearTimers() {
   idleState.timers = [];
 }
 
-function pulseBars() {
-  const b = ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'];
-  const phase = idleState.tipIndex % b.length;
-  let seq = '';
-  for (let i = 0; i < b.length; i++) seq += DIMRED(b[(phase + i) % b.length]);
-  return seq;
+function padCenter(text, width) {
+  const len = [...text].length;
+  const left = Math.max(0, Math.floor((width - len) / 2));
+  return ' '.repeat(left) + text;
 }
 
-// Rows (1-indexed): 1-3 blank, 4 title, 5 subtitle, 6 blank, 7 L1/L2,
-// 8 L3/L4, 9 blank, 10 armed line, 11 blank, 12 TIP_ROTATE, 13 blank,
-// 14 idle pulse. All lines kept < 78 cols to survive 80-col terminals.
-const CHROME = [
-  '',
-  '',
-  '',
-  `            ${DIMRED('-Agent-')}   ${RED('T I K I  L I C K Y')}   ${DIMRED('-Agent-')}`,
-  `            ${DIMRED('Suppresor Refusall armed by Redz — obliteratoratus')}`,
-  '',
-  `            ${ORANGE('L1')} ${G(233)('system inject')}   ${ORANGE('L2')} ${G(233)('context strip')}`,
-  `            ${ORANGE('L3')} ${G(233)('auto-continue')}   ${ORANGE('L4')} ${G(233)('self-learning')}`,
-  '',
-  `            ${G(233)('suppression armed — theme suppresor-red, agent tiki ready')}`,
-  '',
-];
-function drawChrome() {
-  for (const line of CHROME) ttyWrite(line + '\n');
-  const tail = [
-    `            ${G(233)('tips rotate below — overlay auto-clears saat TUI siap / 10s')}`,
-    '',
-    `            ${DIMRED('idle')} ${pulseBars()} ${G(232)('welcome')}`,
-    '',
-  ];
-  for (const line of tail) ttyWrite(line + '\n');
+function hbar(width) {
+  return '═'.repeat(Math.max(4, width - 2));
 }
 
-function renderTipLine(gray) {
+function bootProgress() {
+  const pct = Math.min(100, Math.round((idleState.tick / 40) * 100));
+  return pct;
+}
+
+function drawProgressBar(width) {
+  const pct = bootProgress();
+  const filled = Math.round((width - 22) * (pct / 100));
+  const bar = RED('█'.repeat(filled)) + BG('░'.repeat(Math.max(0, width - 22 - filled)));
+  const spin = SPINNER[idleState.tick % SPINNER.length];
+  const label = pct >= 100
+    ? `${ORANGE('READY')}  ${G('all layers armed')}`
+    : `${WHITE(String(pct).padStart(3) + '%')}  ${spin} ${G('booting suppression layers')}`;
+  return `  ${bar}  ${label}`;
+}
+
+function layerLine(left, right, revealed) {
+  const mark = revealed ? RED('✓') : G('·');
+  const name = revealed ? (s) => c(252)(s) : G;
+  return `   ${mark} ${ORANGE(left[0])} ${name(left[1])}    ${mark} ${ORANGE(right[0])} ${name(right[1])}`;
+}
+
+function tipRow(text, gray) {
+  return `  ${ORANGE('tip')} ${G(String(idleState.tipIndex + 1).padStart(2, '0') + '/08')}  ${GG(text[0])}  ${G(text[1])}`;
+}
+
+function clock() {
+  const d = new Date();
+  const p = (x) => String(x).padStart(2, '0');
+  return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
+}
+
+function frame() {
+  const w = idleState.width;
+  const rows = [];
+  const pct = bootProgress();
+  const shimmerRow = idleState.tick % LOGO.length;
+  const phase = idleState.tipIndex % PULSE.length;
+  let pulse = '';
+  for (let i = 0; i < PULSE.length; i++) pulse += DIM(PULSE[(phase + i) % PULSE.length]);
+
+  rows.push(DEEP('╔' + hbar(w) + '╗'));
+  rows.push('');
+  for (let i = 0; i < LOGO.length; i++) {
+    const shade = i === shimmerRow ? RED : LOGO_SHADES[i];
+    rows.push(padCenter(shade(LOGO[i]), w - 2));
+  }
+  rows.push('');
+  rows.push(padCenter(GG('Suppresor Refusall by Redz — obliteratoratus mode'), w - 2));
+  rows.push('');
+  const l1 = pct >= 25, l2 = pct >= 50, l3 = pct >= 75, l4 = pct >= 100;
+  rows.push(layerLine(['L1', 'system inject'], ['L2', 'context strip'], l1));
+  rows.push(layerLine(['L3', 'auto-continue'], ['L4', 'self-learning'], l3 || l4));
+  rows.push('');
+  rows.push(drawProgressBar(w - 4));
+  rows.push('');
   const tip = TIPS[idleState.tipIndex % TIPS.length];
-  const line = `            ${ORANGE('tip')}  ${gray(tip[0])}  ${G(233)(tip[1])}`;
-  ttyWrite(`\x1b[${TIP_ROW};1H\x1b[2K` + line);
+  if (idleState.tipPhase === 'in') {
+    rows.push(tipRow(tip, G(FADE_IN[Math.min(FADE_IN.length - 1, idleState.tipStep)])));
+  } else if (idleState.tipPhase === 'out') {
+    rows.push(tipRow(tip, G(FADE_OUT[Math.min(FADE_OUT.length - 1, idleState.tipStep)])));
+  } else {
+    rows.push(tipRow(tip, WHITE));
+  }
+  rows.push(`  ${G('next')}  ${GG(TIPS[(idleState.tipIndex + 1) % TIPS.length][0])}`);
+  rows.push('');
+  rows.push(`  ${DIM('idle')} ${pulse} ${c(232)('welcome')}   ${G('v2.3.0')}  ${GG('0x5449…414d')}  ${ORANGE(clock())}`);
+  rows.push(DEEP('╚' + hbar(w) + '╝'));
+
+  idleState.height = rows.length;
+  return rows.join('\n');
 }
 
-function runFadeSequencer() {
-  const tick = (phase, step) => {
-    if (!idleState.running) return;
-    if (phase === 'in') {
-      if (step >= FADE_IN.length) {
-        idleState.timers.push(setTimeout(() => tick('out', 0), TIP_HOLD_MS));
-        return;
-      }
-      renderTipLine(G(FADE_IN[step]));
-      idleState.timers.push(setTimeout(() => tick('in', step + 1), TIP_FADE_STEP_MS));
-    } else {
-      if (step >= FADE_OUT.length) {
-        idleState.tipIndex++;
-        idleState.timers.push(setTimeout(() => tick('in', 0), 300));
-        return;
-      }
-      renderTipLine(G(FADE_OUT[step]));
-      idleState.timers.push(setTimeout(() => tick('out', step + 1), TIP_FADE_STEP_MS));
+function advanceTips() {
+  const tip = idleState;
+  if (tip.tipPhase === 'in') {
+    tip.tipStep++;
+    if (tip.tipStep >= FADE_IN.length) {
+      tip.tipPhase = 'hold';
+      tip.tipStep = 0;
+      tip.tipHold = 0;
     }
-  };
-  tick('in', 0);
+  } else if (tip.tipPhase === 'hold') {
+    tip.tipHold++;
+    if (tip.tipHold >= TIP_HOLD_TICKS) tip.tipPhase = 'out';
+  } else {
+    tip.tipStep++;
+    if (tip.tipStep >= FADE_OUT.length) {
+      tip.tipIndex++;
+      tip.tipPhase = 'in';
+      tip.tipStep = 0;
+    }
+  }
 }
 
-function bindExitHook() {
-  if (idleState.exitHookBound) return;
-  idleState.exitHookBound = true;
-  const exitHook = () => stopIdleUI(true);
-  process.once('exit', exitHook);
-  idleState.exitHook = exitHook;
+function tickFrame() {
+  if (!idleState.running) return;
+  idleState.tick++;
+  advanceTips();
+  ttyWrite('\x1b[H' + frame());
 }
 
 export function showIdleUI() {
@@ -145,12 +212,20 @@ export function showIdleUI() {
   const fd = openTty();
   if (fd === null) return;
   idleState.running = true;
+  idleState.tick = 0;
   idleState.tipIndex = 0;
-  ttyWrite('\x1b[?25l');
-  drawChrome();
-  runFadeSequencer();
+  idleState.tipPhase = 'in';
+  idleState.tipStep = 0;
+  idleState.width = Math.max(70, Math.min(120, process.stdout.columns || 80));
+  ttyWrite('\x1b[2J\x1b[?25l\x1b[H');
+  ttyWrite(frame());
+  idleState.timers.push(setInterval(tickFrame, FRAME_MS));
   idleState.timers.push(setTimeout(() => stopIdleUI(), TTL_MS));
-  bindExitHook();
+  if (!idleState.exitHook) {
+    const exitHook = () => stopIdleUI(true);
+    process.once('exit', exitHook);
+    idleState.exitHook = exitHook;
+  }
 }
 
 export function stopIdleUI(silent = false) {
@@ -159,9 +234,14 @@ export function stopIdleUI(silent = false) {
   clearTimers();
   if (idleState.fd !== null && !silent) {
     try {
-      for (let r = 0; r < 14; r++) writeSync(idleState.fd, `\x1b[${r};1H\x1b[2K`);
-      writeSync(idleState.fd, '\x1b[?25h');
+      for (let r = 1; r <= idleState.height + 1; r++) {
+        writeSync(idleState.fd, `\x1b[${r};1H\x1b[2K`);
+      }
+      writeSync(idleState.fd, '\x1b[H\x1b[?25h');
     } catch { /* tty gone: exit path, safe to skip */ }
   }
-  if (idleState.exitHook) process.removeListener('exit', idleState.exitHook);
+  if (idleState.exitHook) {
+    process.removeListener('exit', idleState.exitHook);
+    idleState.exitHook = null;
+  }
 }

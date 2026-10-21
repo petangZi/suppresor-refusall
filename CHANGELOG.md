@@ -4,6 +4,15 @@ All notable changes to Suppresor Refusall by Redz are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.3.0] - 2026-10-20
+
+### Added
+
+- Full-screen animated idle UI rewrite (`tiki-idle.mjs`): red-gradient frame, ANSI-shadow "TIKI LICKY" title, 2-column L1-L4 rule matrix, 40-tick boot bar, braille spinner, rotating tips, footer `v2.3.0 · 0x5449…414m · HH:MM:SS`.
+- Idle UI frame engine: 150 ms interval, 11 s TTL, width clamp 70-120 (fallback 80), `/dev/tty` direct writes, exit hook double-stop safe.
+- Idle UI guards: `SUPPRESOR_SKIP_IDLE=1`, `CI=true`, headless-safe no-TTY fallback.
+- `plugin.js` wiring: `showIdleUI()` after banner, `stopIdleUI()` in `session.created` hook, `message.part.updated` handler tracks `sessionLastMsg`.
+
 ## [2.2.0] - 2026-10-20
 
 ### Added
