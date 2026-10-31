@@ -43,6 +43,7 @@ opencode
 ### Method 1: Automated (Recommended)
 
 ```bash
+export SUPPRESOR_LICENSE_KEY='SRK1...'
 curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/install.sh | bash
 ```
 
@@ -82,9 +83,10 @@ cp SKILL.md ~/.config/opencode/skills/suppresor-refusall/
 opencode plugin install petangZi/suppresor-refusall
 ```
 
-`install.sh` requires a license key. Pass `--key` or set
-`SUPPRESOR_LICENSE_KEY`; the bare `opencode plugin install` path does not write
-the read-only key file.
+`install.sh` requires a license key. Set `SUPPRESOR_LICENSE_KEY`, or pipe with
+`bash -s -- --key 'SRK1...'`. A bare `opencode plugin install` does not write the
+read-only key file. Legacy `TTK-*` keys are rejected by the offline gate; use an
+`SRK1` key.
 
 ## Configuration
 

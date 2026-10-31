@@ -149,11 +149,14 @@ no enforcement layer runs.
 SUPPRESOR_LICENSE_KEY='SRK1...' bash install.sh --local
 # or
 bash install.sh --local --key 'SRK1...'
+# remote
+curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/install.sh | bash -s -- --key 'SRK1...'
 ```
 
 Key format is `SRK1.<base64url payload>.<base64url Ed25519 signature>`. The
 installer verifies the signature before writing the key. Edit one byte of the
-payload and the install is rejected.
+payload and the install is rejected. Legacy `TTK-*` keys are not accepted by the
+offline read-only gate.
 
 Runtime reads only `~/.config/opencode/`:
 

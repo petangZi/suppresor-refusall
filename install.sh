@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Suppresor Refusall by Redz — Automated Installer
-# Run: curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/install.sh | bash
-# Or:  bash install.sh --local (when run from extracted package)
+# Run: SUPPRESOR_LICENSE_KEY='SRK1...' bash -c "$(curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/install.sh)"
+# Or:  curl -fsSL .../install.sh | bash -s -- --key 'SRK1...'
+# Local: bash install.sh --local --key 'SRK1...'
 
 set -euo pipefail
 
@@ -69,6 +70,7 @@ while [[ $# -gt 0 ]]; do
       echo "Usage: $0 [--local] [--key <SRK1...>]"
       echo "  --local  Install from current directory (extracted package)"
       echo "  --key    License key; required for install"
+      echo "  curl ... | bash -s -- --key SRK1..."
       exit 0
       ;;
     *) shift ;;
@@ -119,8 +121,11 @@ verify_license_key() {
   if [[ ! -f "$PLUGIN_DIR/license-key.mjs" ]]; then
     error "Read-only license verifier missing"
   fi
+  if [[ "$LICENSE_KEY" == TTK-* ]]; then
+    error "Legacy TTK-* key tidak didukung gate read-only. Pakai key SRK1, atau jalankan gate online lalu set SUPPRESOR_GATE_URL."
+  fi
   if ! node "$PLUGIN_DIR/license-key.mjs" --verify "$LICENSE_KEY" >/dev/null 2>&1; then
-    error "License key invalid or expired"
+    error "License key invalid or expired (format yang diterima: SRK1.<payload>.<signature>)"
   fi
   success "License key verified"
 }
