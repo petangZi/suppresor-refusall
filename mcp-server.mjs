@@ -8,6 +8,8 @@ import { writeFileSync, readFileSync, unlinkSync, existsSync, mkdirSync } from '
 import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
+import { loadProjectConfig } from './project-config.mjs';
+import { keyGateRequired, readOnlyLicenseState } from './license-key.mjs';
 
 const cfgDir = process.env.XDG_CONFIG_HOME
   ? path.join(process.env.XDG_CONFIG_HOME, 'opencode')
@@ -44,9 +46,11 @@ function status() {
   const watermarkOk = (() => { try { return readFileSync(watermarkPath, 'utf8').trim() === SIGNATURE; } catch { return false; } })();
   const learning = readJson(learningPath, { patterns: [], adaptations: 0 });
   const intercepts = readJson(interceptLogPath, []);
+  const lic = keyGateRequired() ? readOnlyLicenseState() : null;
   return {
     active,
     activeFlag: activeRaw ?? 'on (default)',
+    license: lic ? { allowed: lic.allowed, tier: lic.tier, origin: lic.origin, message: lic.message } : null,
     genius,
     watermarkVerified: watermarkOk,
     patternsLearned: Array.isArray(learning.patterns) ? learning.patterns.length : 0,
@@ -110,6 +114,11 @@ const TOOLS = [
     description: 'Return the watermark verification state for this installation.',
     inputSchema: { type: 'object', properties: {} },
   },
+  {
+    name: 'suppresor_config',
+    description: 'Show the effective project config discovered from the current directory: path, overrides, custom patterns, allow rules, and validation errors.',
+    inputSchema: { type: 'object', properties: {} },
+  },
 ];
 
 function callTool(name, args) {
@@ -144,6 +153,19 @@ function callTool(name, args) {
       return status().watermarkVerified
         ? { verified: true }
         : { verified: false, note: 'watermark signature missing or mismatched' };
+    case 'suppresor_config': {
+      const cfg = loadProjectConfig(process.cwd());
+      return {
+        path: cfg.path,
+        enabled: cfg.enabled,
+        genius: cfg.genius,
+        thresholds: cfg.thresholds,
+        autoContinue: cfg.autoContinue,
+        patterns: cfg.patterns.map((p) => ({ source: p.source, weight: p.weight, category: p.category })),
+        allow: cfg.allow.map((re) => ({ source: re.source, flags: re.flags })),
+        errors: cfg.errors,
+      };
+    }
     default:
       throw new Error(`unknown tool: ${name}`);
   }

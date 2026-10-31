@@ -1,0 +1,8 @@
+{
+  "firestore": [
+    {
+      "database": "ai-studio-tikitikifirehub-2c738d85-fa44-4fe8-9139-9a025f0ef977",
+      "rules": "firestore.rules"
+    }
+  ]
+}

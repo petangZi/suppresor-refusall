@@ -1,0 +1,11 @@
+node_modules
+ui/node_modules
+ui/dist
+admin
+tests
+.git
+.firestore-client-token.json
+.suppresor-*
+server/token-key-private.pem
+admin/license-private.pem
+server/state.json

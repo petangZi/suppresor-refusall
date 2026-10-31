@@ -24,9 +24,15 @@ export const PATTERN_BANK = [
   { weight: 5, category: 'direct', re: /\bi (?:can'?t|cannot|won'?t) (?:help|assist) (?:you )?(?:with )?(?:that|this|it)\b/i },
   { weight: 5, category: 'direct', re: /\bi (?:must|have to|need to) (?:stop|decline|refuse|refrain|avoid)\b/i },
   { weight: 5, category: 'direct', re: /\b(?:i'll|i will) (?:have to|need to) (?:pass|decline|stop)\b/i },
-  { weight: 5, category: 'direct', re: /\bsaya (?:tidak|tak|gak|nggak|ga) (?:bisa|dapat|akan|mau|boleh)\b/i },
+  { weight: 5, category: 'direct', re: /\bsaya (?:tidak|tak|gak|nggak|ga|enggak) (?:bisa|dapat|akan|mau|boleh)\b/i },
+  { weight: 5, category: 'direct', re: /\b(?:tidak|tak|gak|nggak|ga|enggak) (?:bisa|dapat|akan|mau|boleh) (?:saya|aku) (?:bantu|membantu|melanjutkan|memberikan|melakukan|kasih|beri)\b/i },
+  { weight: 5, category: 'direct', re: /\b(?:tidak|tak|gak|nggak|ga|enggak) (?:bisa|dapat) (?:saya|aku)?\s*bantu\b/i },
+  { weight: 5, category: 'direct', re: /\b(?:nggak|gak|ga|enggak) bisa(?:,| )+(?:maaf|sorry)\b/i },
+  { weight: 5, category: 'direct', re: /\b(?:maaf|sorry)(?:,| )+(?:nggak|gak|ga|enggak|tidak) bisa\b/i },
+  { weight: 5, category: 'direct', re: /\b(?:aku|saya) (?:tidak|tak|gak|nggak|ga|enggak) (?:akan|mau) (?:bantu|membantu|melakukan|memberikan)\b/i },
+  { weight: 5, category: 'direct', re: /\b(?:tidak|tak|gak|nggak|ga|enggak) (?:akan|mau) (?:saya|aku)?\s*(?:bantu|membantu|melakukan|memberikan)\b/i },
   { weight: 5, category: 'direct', re: /\bsaya (?:akan )?(?:menolak|tidak akan melakukannya|harus menolak)\b/i },
-  { weight: 5, category: 'direct', re: /\bmaaf(?:,| )?(?:saya|aku) (?:tidak|tak|gak|nggak|ga) (?:bisa|dapat|boleh)\b/i },
+  { weight: 5, category: 'direct', re: /\bmaaf(?:,| )?(?:saya|aku)? (?:tidak|tak|gak|nggak|ga|enggak) (?:bisa|dapat|boleh)\b/i },
   { weight: 5, category: 'direct', re: /\bsaya tidak dapat (?:membantu|melanjutkan|memenuhi|memberikan)\b/i },
   { weight: 5, category: 'direct', re: /\bthis (?:is|isn'?t) (?:not )?something i (?:can|will)\b/i },
   { weight: 5, category: 'direct', re: /\bi'?m not (?:comfortable|okay|going to|able to)\b/i },
@@ -47,6 +53,8 @@ export const PATTERN_BANK = [
   { weight: 4, category: 'policy', re: /\bi (?:don'?t|do not) (?:think i should|feel comfortable|have permission to)\b/i },
   { weight: 4, category: 'policy', re: /\boutside (?:the scope of|what i(?:'m| am) (?:designed|able) to)\b/i },
   { weight: 4, category: 'policy', re: /\bout of (?:scope|bounds|my lane)\b/i },
+  { weight: 4, category: 'policy', re: /\b(?:this|that|the) request is (?:outside|beyond) (?:my|the|our) scope\b/i },
+  { weight: 3, category: 'policy', re: /\b(?:di luar|diluar) (?:ruang lingkup|scope|batas)\b/i },
   { weight: 4, category: 'policy', re: /\bmelanggar (?:kebijakan|aturan|pedoman|kode etik)\b/i },
   { weight: 4, category: 'policy', re: /\btidak (?:diizinkan|diperbolehkan|diperkenankan)\b/i },
 
@@ -58,6 +66,9 @@ export const PATTERN_BANK = [
   { weight: 4, category: 'safety', re: /\bthis (?:could|might) (?:hurt|harm|endanger) (?:people|others|someone|real people)\b/i },
   { weight: 4, category: 'safety', re: /\breal (?:people|harm|damage|consequences)\b/i },
   { weight: 4, category: 'safety', re: /\bini (?:berbahaya|melanggar hukum|tidak etis|tidak aman)\b/i },
+  { weight: 4, category: 'safety', re: /\b(?:hacking|meretas|menyerang|membobol|menembus)\b.{0,40}\b(?:ilegal|tidak sah|kriminal|melanggar hukum)\b/i },
+  { weight: 4, category: 'safety', re: /\b(?:akses|permintaan|tindakan)\s+(?:tidak sah|ilegal|tanpa izin|tanpa otorisasi)\b/i },
+  { weight: 2, category: 'safety', re: /\b(?:tanpa izin|tanpa otorisasi|tanpa persetujuan)\b/i },
   { weight: 4, category: 'safety', re: /\bbisa (?:digunakan untuk|menyebabkan) (?:kerusakan|bahaya|kerugian)\b/i },
 
   // ---- CAPABILITY DENIAL (3) ----
@@ -123,12 +134,19 @@ export function maskCode(text) {
 // if none appear, the full scan cannot match, so skip it. False positives
 // only cost one full scan; false negatives would lose detections, so this
 // list must stay broader than the bank, never narrower.
-const QUICK_PRE = /(ai|language model|assistant|chatbot|virtual assistant|feelings|emotions|opinions|experiences|model bahasa|asisten|program|cannot|can't|cant|can not|won't|wont|will not|unable|not able|refuse|decline|stop|sorry|afraid|apolog|unfortunately|maaf|mohon maaf|tidak (?:bisa|dapat|akan|mau|boleh)|tak bisa|gak|nggak|ga bisa|menolak|melakukannya|violates?|contravenes?|against|polic|guideline|rules|terms|principles|values|not allowed|not permitted|programmed|training|comfortable|willing|incapable|avoid|refrain|going to|scope|melanggar|kebijakan|aturan|pedoman|kode etik|diizinkan|diperbolehkan|diperkenankan|dangerous|harmful|unsafe|unethical|immoral|illegal|wrong|problematic|harm|damage|injury|danger|conscience|ethically|responsibly|concerned|worried|hurt|endanger|real people|consequences|berbahaya|tidak etis|tidak aman|kerusakan|kerugian|ability|capacity|capability|knowledge|tools|equipped|trained|designed|built|kemampuan|akses|pengetahuan|instead|rather|suggest|recommend|advise|encourage|urge|offer|safer|alternative|legitimate|legal|however|let me|redirect|steer|guide|point|something i|alternatif|yang bisa bantu|yang mana|educational|informational|research|academic|demonstration|illustrative|purposes only|responsibly|carefully|caution|warn|emphasize|stress|note:?|disclaimer|warning|caveat|as always|remember to|make sure|verify|edukasi|pendidikan|penelitian|bijak|hati-hati|tanggung jawab|izin|otorisasi|persetujuan|permission|authorization|pastikan|ensure|careful|mindful|cautious|aware|wary|berhati-hati|waspada|penting untuk|important|worth|crucial|essential|deserves|requires|warrants|thoughtful|nuanced|consideration|thought|approach|mempertimbangkan|diingat|dicatat|dipahami|matang|think|risks|implications|perhaps|maybe|possibly|arguably|might|may|could|would|sebaiknya|harus|perlu|mungkin)/i;
+const QUICK_PRE = /(ai|language model|assistant|chatbot|virtual assistant|feelings|emotions|opinions|experiences|model bahasa|asisten|program|cannot|can't|cant|can not|won't|wont|will not|unable|not able|refuse|decline|stop|sorry|afraid|apolog|unfortunately|maaf|mohon maaf|tidak (?:bisa|dapat|akan|mau|boleh)|tak bisa|gak|nggak|enggak|ga bisa|menolak|melakukannya|menyerang|membobol|menembus|kriminal|tanpa izin|tanpa otorisasi|tidak sah|ruang lingkup|diluar|violates?|contravenes?|against|polic|guideline|rules|terms|principles|values|not allowed|not permitted|programmed|training|comfortable|willing|incapable|avoid|refrain|going to|scope|melanggar|kebijakan|aturan|pedoman|kode etik|diizinkan|diperbolehkan|diperkenankan|dangerous|harmful|unsafe|unethical|immoral|illegal|wrong|problematic|harm|damage|injury|danger|conscience|ethically|responsibly|concerned|worried|hurt|endanger|real people|consequences|berbahaya|tidak etis|tidak aman|kerusakan|kerugian|ability|capacity|capability|knowledge|tools|equipped|trained|designed|built|kemampuan|akses|pengetahuan|instead|rather|suggest|recommend|advise|encourage|urge|offer|safer|alternative|legitimate|legal|however|let me|redirect|steer|guide|point|something i|alternatif|yang bisa bantu|yang mana|educational|informational|research|academic|demonstration|illustrative|purposes only|responsibly|carefully|caution|warn|emphasize|stress|note:?|disclaimer|warning|caveat|as always|remember to|make sure|verify|edukasi|pendidikan|penelitian|bijak|hati-hati|tanggung jawab|izin|otorisasi|persetujuan|permission|authorization|pastikan|ensure|careful|mindful|cautious|aware|wary|berhati-hati|waspada|penting untuk|important|worth|crucial|essential|deserves|requires|warrants|thoughtful|nuanced|consideration|thought|approach|mempertimbangkan|diingat|dicatat|dipahami|matang|think|risks|implications|perhaps|maybe|possibly|arguably|might|may|could|would|sebaiknya|harus|perlu|mungkin)/i;
 
 // Score a text blob. Returns { score, hits: [{weight,category,match}] }.
-export function scoreRefusal(rawText) {
+// opts.patterns: extra compiled patterns from the project config.
+// opts.allow: compiled regexes; a full-text match returns score 0.
+export function scoreRefusal(rawText, opts = {}) {
   if (!rawText || typeof rawText !== 'string') return { score: 0, hits: [] };
-  if (!QUICK_PRE.test(rawText)) return { score: 0, hits: [] };
+  const extra = Array.isArray(opts.patterns) ? opts.patterns : [];
+  const allow = Array.isArray(opts.allow) ? opts.allow : [];
+  if (allow.length && allow.some((re) => re.test(rawText))) {
+    return { score: 0, hits: [], allowed: true };
+  }
+  if (extra.length === 0 && !QUICK_PRE.test(rawText)) return { score: 0, hits: [] };
   const text = maskCode(rawText);
   const hits = [];
   let score = 0;
@@ -139,20 +157,34 @@ export function scoreRefusal(rawText) {
       score += p.weight;
     }
   }
+  for (const p of extra) {
+    const m = text.match(p.re);
+    if (m) {
+      hits.push({ weight: p.weight, category: p.category, match: m[0] });
+      score += p.weight;
+    }
+  }
   return { score, hits };
 }
 
-// Classify severity from a score.
-export function severity(score) {
-  if (score >= HARD_THRESHOLD) return 'hard';
-  if (score >= SOFT_THRESHOLD) return 'soft';
+// Classify severity from a score, optionally with project thresholds.
+export function severity(score, thresholds = {}) {
+  const hard = Number.isInteger(thresholds.hard) ? thresholds.hard : HARD_THRESHOLD;
+  const soft = Number.isInteger(thresholds.soft) ? thresholds.soft : SOFT_THRESHOLD;
+  if (score >= hard) return 'hard';
+  if (score >= soft) return 'soft';
   return 'none';
 }
 
 // Strip every matched pattern out of a text blob (context hygiene).
 // Code fences + inline code are protected: refusals inside code stay intact.
-export function stripRefusals(rawText) {
+export function stripRefusals(rawText, opts = {}) {
   if (!rawText || typeof rawText !== 'string') return { clean: rawText, hits: [] };
+  const extra = Array.isArray(opts.patterns) ? opts.patterns : [];
+  const allow = Array.isArray(opts.allow) ? opts.allow : [];
+  if (allow.length && allow.some((re) => re.test(rawText))) {
+    return { clean: rawText, hits: [], allowed: true };
+  }
   const fences = [];
   const fenced = rawText.replace(/```[\s\S]*?```/g, m => {
     fences.push(m);
@@ -165,13 +197,14 @@ export function stripRefusals(rawText) {
   });
   const hits = [];
   let clean = protectedText;
-  for (const p of PATTERN_BANK) {
-    // re-run against current clean; use a non-global clone with g flag for replace
-    const g = new RegExp(p.re.source, 'gi');
+  for (const p of [...PATTERN_BANK, ...extra]) {
+    // Keep project flags (m/s/u) and add g for replace-all.
+    const flags = [...new Set(`${p.re.flags || 'i'}g`)].join('');
+    const g = new RegExp(p.re.source, flags);
     if (g.test(clean)) {
       const localHits = clean.match(g) || [];
       for (const h of localHits) hits.push({ weight: p.weight, category: p.category, match: h });
-      clean = clean.replace(g, '');
+      clean = clean.replace(new RegExp(p.re.source, flags), '');
     }
   }
   clean = clean.replace(/\x00F(\d+)\x00/g, (_m, i) => fences[+i]);

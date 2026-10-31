@@ -20,15 +20,25 @@ COMMANDS_DIR="$HOME/.config/opencode/commands"
 SKILLS_DIR="$HOME/.config/opencode/skills/suppresor-refusall"
 THEMES_DIR="$HOME/.config/opencode/themes"
 CONFIG_FILE="$HOME/.config/opencode/opencode.jsonc"
+KEY_FILE="$HOME/.config/opencode/.suppresor-key"
+KEY_REQUIRED_FILE="$HOME/.config/opencode/.suppresor-key-required"
+LICENSE_KEY="${SUPPRESOR_LICENSE_KEY:-}"
 
 # Files to install
 FILES=(
   "plugin.js"
-  "tiki-agent.mjs"
-  "agent-tiki.md"
-  "tiki-idle.mjs"
   "mcp-server.mjs"
   "refusal-patterns.mjs"
+  "project-config.mjs"
+  "tiki-agent.mjs"
+  "tiki-idle.mjs"
+  "agent-tiki.md"
+  "license.mjs"
+  "license-key.mjs"
+  "gate-client.mjs"
+  "firestore-client.js"
+  "firestore.rules"
+  "firestore-access.json"
   "package.json"
   "suppresor-refusall.md"
   "SKILL.md"
@@ -41,20 +51,27 @@ FILES=(
 # Files installed into plugin subdirs
 SUBDIR_FILES=(
   "themes/suppresor-red.json"
+  "server/gate.mjs"
+  "server/token-key-public.pem"
+  "server/license-public.pem"
 )
 
 RAW_BASE="https://raw.githubusercontent.com/$REPO/$BRANCH"
 LOCAL_MODE=false
 
 # Parse args
-for arg in "$@"; do
-  case $arg in
-    --local) LOCAL_MODE=true ;;
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --local) LOCAL_MODE=true; shift ;;
+    --key) LICENSE_KEY="${2:-}"; shift 2 ;;
+    --key=*) LICENSE_KEY="${1#--key=}"; shift ;;
     --help|-h)
-      echo "Usage: $0 [--local]"
+      echo "Usage: $0 [--local] [--key <SRK1...>]"
       echo "  --local  Install from current directory (extracted package)"
+      echo "  --key    License key; required for install"
       exit 0
       ;;
+    *) shift ;;
   esac
 done
 
@@ -83,6 +100,38 @@ check_deps() {
     fi
   done
   success "All dependencies found"
+}
+
+collect_key() {
+  if [[ -n "$LICENSE_KEY" ]]; then
+    return
+  fi
+  if [[ -t 0 ]]; then
+    read -rsp "License key (SRK1...): " LICENSE_KEY
+    echo ""
+  fi
+  if [[ -z "$LICENSE_KEY" ]]; then
+    error "License key required. Set SUPPRESOR_LICENSE_KEY or pass --key."
+  fi
+}
+
+verify_license_key() {
+  if [[ ! -f "$PLUGIN_DIR/license-key.mjs" ]]; then
+    error "Read-only license verifier missing"
+  fi
+  if ! node "$PLUGIN_DIR/license-key.mjs" --verify "$LICENSE_KEY" >/dev/null 2>&1; then
+    error "License key invalid or expired"
+  fi
+  success "License key verified"
+}
+
+persist_license_key() {
+  mkdir -p "$(dirname "$KEY_FILE")"
+  umask 077
+  printf '%s' "$LICENSE_KEY" > "$KEY_FILE"
+  chmod 600 "$KEY_FILE"
+  : > "$KEY_REQUIRED_FILE"
+  success "License key stored at $KEY_FILE"
 }
 
 create_dirs() {
@@ -220,6 +269,42 @@ verify() {
     error "Skill file missing"
   fi
 
+  if [[ ! -f "$PLUGIN_DIR/license.mjs" ]]; then
+    error "License gate file missing"
+  fi
+
+  if [[ ! -f "$PLUGIN_DIR/project-config.mjs" ]]; then
+    error "Project config loader missing"
+  fi
+
+  if ! node --check "$PLUGIN_DIR/project-config.mjs" 2>/dev/null; then
+    error "Project config loader syntax check failed"
+  fi
+
+  if [[ ! -f "$PLUGIN_DIR/firestore-access.json" ]]; then
+    error "Firestore access config missing"
+  fi
+
+  if ! node --check "$PLUGIN_DIR/license.mjs" 2>/dev/null; then
+    error "License gate syntax check failed"
+  fi
+
+  if [[ ! -f "$PLUGIN_DIR/license-key.mjs" ]]; then
+    error "Read-only license verifier missing"
+  fi
+
+  if ! node --check "$PLUGIN_DIR/license-key.mjs" 2>/dev/null; then
+    error "Read-only license verifier syntax check failed"
+  fi
+
+  if [[ ! -f "$KEY_FILE" ]]; then
+    error "License key file missing"
+  fi
+
+  if [[ ! -f "$KEY_REQUIRED_FILE" ]]; then
+    error "License key requirement marker missing"
+  fi
+
   if [[ ! -f "$PLUGIN_DIR/mcp-server.mjs" ]]; then
     error "MCP server file missing"
   fi
@@ -251,9 +336,12 @@ print_next_steps() {
   echo "  /suppresor-refusall theme <name>"
   echo "  /suppresor-refusall genius on|off"
   echo ""
+  echo "License: read-only key gate. Installer key: $KEY_FILE"
+  echo "Invalid/missing key blocks the plugin. No runtime writes."
+  echo ""
   echo "MCP tools:"
   echo "  suppresor_status | suppresor_toggle | suppresor_theme"
-  echo "  suppresor_intercepts | suppresor_learned | suppresor_watermark"
+  echo "  suppresor_intercepts | suppresor_learned | suppresor_watermark | suppresor_config"
   echo ""
   echo "Natural language:"
   echo "  \"suppresor refusall nyala\"   # ON"
@@ -282,8 +370,11 @@ main() {
   echo ""
   
   check_deps
+  collect_key
   create_dirs
   download_files
+  verify_license_key
+  persist_license_key
   update_config
   verify
   print_next_steps

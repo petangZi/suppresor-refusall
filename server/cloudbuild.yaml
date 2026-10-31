@@ -1,0 +1,34 @@
+substitutions:
+  _REGION: asia-southeast2
+  _SERVICE: suppresor-gate
+
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - server/Dockerfile
+      - -t
+      - gcr.io/$PROJECT_ID/${_SERVICE}:$SHORT_SHA
+      - .
+  - name: gcr.io/cloud-builders/docker
+    args: [push, gcr.io/$PROJECT_ID/${_SERVICE}:$SHORT_SHA]
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image
+      - gcr.io/$PROJECT_ID/${_SERVICE}:$SHORT_SHA
+      - --region
+      - ${_REGION}
+      - --platform
+      - managed
+      - --allow-unauthenticated
+      - --port
+      - "8787"
+      - --set-env-vars
+      - SUPPRESOR_GATE_NOPERSIST=1
+      - --set-secrets
+      - SUPPRESOR_GATE_SECRET=gate-secret:latest,SUPPRESOR_TOKEN_KEY_PEM=token-key-private:latest

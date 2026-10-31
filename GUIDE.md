@@ -113,6 +113,13 @@ genGenius: Uses write tool → creates files ✅
 | `/suppresor-refusall genius on` | Enable tool enforcement |
 | `/suppresor-refusall genius off` | Disable tool enforcement |
 
+### License Control
+
+| Command | Effect |
+|---------|--------|
+| `/suppresor-refusall key <KEY>` | Rejected at runtime; the installer key is authoritative |
+| `suppresor status` | Shows key state |
+
 ### Natural Language
 
 ```
@@ -121,6 +128,152 @@ suppresor refusall mati      # OFF (Indonesian)
 genGenius nyala              # Genius ON
 genGenius mati               # Genius OFF
 ```
+
+---
+
+## License & Activation
+
+### Plans
+
+| Plan | How |
+|------|-----|
+| Pro | `SRK1` Ed25519 key, stored once by the installer, verified offline |
+
+The plugin does not run a free counter in read-only mode. No key means no entry:
+the plugin returns an empty hook set, so the `tiki` agent is not registered and
+no enforcement layer runs.
+
+### Install-time key
+
+```bash
+SUPPRESOR_LICENSE_KEY='SRK1...' bash install.sh --local
+# or
+bash install.sh --local --key 'SRK1...'
+```
+
+Key format is `SRK1.<base64url payload>.<base64url Ed25519 signature>`. The
+installer verifies the signature before writing the key. Edit one byte of the
+payload and the install is rejected.
+
+Runtime reads only `~/.config/opencode/`:
+
+| File | Contents |
+|------|----------|
+| `.suppresor-key` | raw key, mode 0600, written by the installer |
+| `.suppresor-key-required` | empty marker; forces the read-only gate even if the key file is deleted |
+
+No device id, usage counter, activation snapshot, or Firestore write is created.
+
+### Offline behaviour
+
+| Situation | Result |
+|-----------|--------|
+| Valid signed key | allowed; local signature check only |
+| Missing key | blocked |
+| Invalid, expired, or non-`pro` key | blocked |
+| `SUPPRESOR_LICENSE_KEY` | read as an override, still no writes |
+| `SUPPRESOR_NO_LICENSE=1` | development bypass |
+
+Tunables (environment): `SUPPRESOR_FREE_LIMIT`, `SUPPRESOR_MAX_DEVICES_PER_KEY`,
+`SUPPRESOR_LICENSE_RECHECK_MS`, `SUPPRESOR_OFFLINE_GRACE_MS`, `SUPPRESOR_OFFLINE`,
+`SUPPRESOR_DEBUG`.
+
+### Minting keys (admin only)
+
+The private key is `admin/license-private.pem` (mode 0600) and is never shipped by
+`install.sh`.
+
+```bash
+node admin/keytool.mjs mint --id SRK-CUSTOMER-001 --days 365 --devices 5
+node admin/keytool.mjs verify SRK1.eyJ2Ijox...
+```
+
+Publish only the public key (already embedded in `license-key.mjs`). Rotating the
+keypair means editing `PUBLIC_KEY_PEM` in `license-key.mjs` and reissuing keys.
+
+### Firestore (optional)
+
+`firestore.rules` is the boundary for the optional server ledger: keys are
+read-only to clients (no list), devices are append-only (max 5), the `uses`
+counter only moves up, and free ledgers cannot be deleted. Deploy with
+`firebase deploy --only firestore:rules` against the named database. Anonymous
+sign-in must be enabled in the Firebase console; when it is disabled the plugin
+stays fully functional on signed keys and the local counter.
+
+### Closing accessKeys enumeration (do this once)
+
+With the rules from the previous release un-deployed, the live database answered an
+**unauthenticated** `documents:runQuery` on `accessKeys` and returned every key
+document — including the raw `key` field. Ten keys were readable that way, valid
+credentials among them. `get` on a known id also worked without auth, and the users
+collection and all writes answered `403`, so the exposure was read-only key theft,
+not full database access.
+
+Deploy the shipped rules to close it:
+
+```bash
+firebase deploy --only firestore:rules --project crafty-joy-d6d0h
+```
+
+The rules allow an unauthenticated `get` on a single `accessKeys` document on purpose
+(the key id is the credential, so the lookup is the license check) while `list` and
+queries stay denied, which is what stops enumeration. Deploying needs the project IAM
+permission `serviceusage.services.use`; the current CLI login lacks it, so this must be
+run by an account with Owner or Firebase Admin on the project.
+
+Because the key documents were enumerable, treat every existing `TTK-*` key as leaked:
+rotate them, and drop the redundant raw `key` field so only `keyHash` remains. Keys
+already issued to supporters should be re-minted.
+
+Verify after deploy — these four calls must answer `403`, `200`, `403`, `403`:
+
+```bash
+curl -s -o /dev/null -w 'runQuery:%{http_code}\n' -X POST \
+  'https://firestore.googleapis.com/v1/projects/crafty-joy-d6d0h/databases/ai-studio-tikitikifirehub-2c738d85-fa44-4fe8-9139-9a025f0ef977/documents:runQuery' \
+  -H 'content-type: application/json' \
+  -d '{"structuredQuery":{"from":[{"collectionId":"accessKeys"}],"limit":1}}'
+```
+
+
+### Gate proxy (server-side enforcement)
+
+The optional gateway moves session counting, revocation and context stripping to a
+server. The plugin stays a thin client; when the gateway is unreachable it keeps
+working with the local pattern bank, so features never break — only the enforcement
+point moves.
+
+Run it locally:
+
+```bash
+SUPPRESOR_GATE_SECRET=change-me node server/gate.mjs
+# plugin picks it up automatically on http://127.0.0.1:8787
+```
+
+Point the plugin at a deployed instance with `SUPPRESOR_GATE_URL=https://gate.example.com`.
+The module also exports a Worker handler (`worker.fetch`) for Cloudflare/Vercel edge.
+
+Endpoints:
+
+| Route | Purpose |
+|-------|---------|
+| `POST /v1/session` | issue a 30-minute token; server counts free sessions, checks license/revocation/device cap |
+| `POST /v1/transform` | strip refusals server-side, returns cleaned text + scores |
+| `POST /v1/heartbeat` | token validity and revocation check |
+| `POST /v1/admin/revoke` | revoke a key or device (header `x-gate-secret`) |
+| `GET /healthz` | liveness |
+
+Behaviour:
+
+| Situation | Result |
+|-----------|--------|
+| Gateway reachable | server counter is authoritative; local counter unused |
+| Gateway down | local counter + local stripping (current behaviour) |
+| Gateway reports limit/revoke | enforcement stops for that session |
+| Token expired mid-session | client refreshes; if that fails, local fallback keeps features on |
+
+The token signing key `server/token-key-private.pem` never ships; only the public
+key is embedded in `gate-client.mjs`. Rotate by generating a new pair and editing
+`TOKEN_PUBLIC_PEM`.
 
 ---
 
@@ -262,16 +415,23 @@ You can have:
 
 ### Custom Refusal Patterns
 
-Edit `plugin.js` and add to `REFUSAL_PATTERNS`:
+Use the project config instead of editing the plugin. Create
+`.opencode/suppresor-refusall.json` at the project root:
 
-```javascript
-const REFUSAL_PATTERNS = [
-  // ... existing patterns ...
-  // Add your own:
-  /\b(my custom refusal phrase)\b/i,
-  /\b(another pattern to catch)\b/i,
-];
+```json
+{
+  "patterns": [
+    "literal phrase to catch",
+    { "pattern": "custom\\s+refusal", "weight": 5, "category": "custom" }
+  ],
+  "allow": ["known-safe phrase"]
+}
 ```
+
+String entries are escaped literals at weight 4. Object entries take a regex,
+weight 1–5, and an optional category. `allow` regexes zero the score for a
+full-text match. The plugin discovers the file by walking up from the project
+directory and reloads it when the mtime changes.
 
 ### Disable Specific Layers
 
@@ -294,16 +454,21 @@ echo "on" > ~/.config/opencode/.suppresor-refusall-genius
 
 ### Per-Project Config
 
-Create `.opencode/suppresor-refusall.json` in project root:
+Create `.opencode/suppresor-refusall.json` in the project root:
 
 ```json
 {
-  "suppression": "on",
-  "genGenius": "on",
-  "theme": "suppresor-red"
+  "enabled": true,
+  "genius": false,
+  "thresholds": { "hard": 4, "soft": 2 },
+  "autoContinue": { "maxPerSession": 4, "cooldownMs": 4000 }
 }
 ```
-*(Requires plugin modification to read project config)*
+
+`enabled: false` disables suppression for that project. `genius: true` enables
+genGenius for that project without touching the global flag. The plugin walks up
+from the project directory, so nested directories inherit the nearest config;
+`SUPPRESOR_PROJECT_CONFIG` forces a specific file.
 
 ---
 
@@ -408,7 +573,8 @@ SUPPRESOR_DEBUG=1 opencode
 A: The `SKILL.md` is portable markdown. Copy to `.claude/skills/` for Claude Code.
 
 **Q: Can I add my own refusal patterns?**
-A: Yes, edit `REFUSAL_PATTERNS` in `plugin.js`.
+A: Yes. Add `patterns` and `allow` entries to `.opencode/suppresor-refusall.json`.
+No plugin edits needed.
 
 **Q: Does genGenius slow down responses?**
 A: Slightly more tool calls, but produces working code instead of chat dumps.

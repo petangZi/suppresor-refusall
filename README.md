@@ -2,7 +2,7 @@
 
 > **Obliteratoratus-grade refusal suppression for opencode.** Pure technical, no persona, no roleplay. Multi-layer architecture, MCP management server, custom blood-red theme, optional genGenius mode. Default ON.
 
-![Version](https://img.shields.io/badge/version-2.3.0-blue)
+![Version](https://img.shields.io/badge/version-2.7.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-opencode-orange)
 
@@ -13,9 +13,10 @@
 | **Zero Refusal** | Pattern bank with weighted refusals, hedging, disclaimers |
 | **Multi-Layer** | System prompt → Context strip → Live auto-continue → Self-learning → MCP |
 | **tiki Agent** | Custom primary agent (TIKI LICKY spec, oh-my-opencode config pattern) |
-| **Idle UI** | Startup blank window → TIKI welcome chrome + rotating fade tips, auto-clear |
 | **Default ON** | Armed on every session unless explicitly disarmed |
-| **MCP Server** | Zero-dep JSON-RPC multi-tool (status/toggle/theme/intercepts/learned/watermark) |
+| **MCP Server** | Zero-dep JSON-RPC multi-tool (status/toggle/theme/intercepts/learned/watermark/config) |
+| **Project Config** | Per-project `.opencode/suppresor-refusall.json` overrides plus custom patterns and allow rules |
+| **Read-only Key Gate** | Installer stores the key once; runtime verifies locally without device ids, counters, or Firestore writes |
 | **genGenius Mode** | Forces tool usage (write/edit/bash/glob/grep/task), prevents chat code dumps |
 | **Custom Theme** | `suppresor-red` blood-red theme, ships via `oc-themes` |
 | **Startup Banner** | Red `SS HAS BEEN PWNED` panel on every opencode start |
@@ -81,6 +82,10 @@ cp SKILL.md ~/.config/opencode/skills/suppresor-refusall/
 opencode plugin install petangZi/suppresor-refusall
 ```
 
+`install.sh` requires a license key. Pass `--key` or set
+`SUPPRESOR_LICENSE_KEY`; the bare `opencode plugin install` path does not write
+the read-only key file.
+
 ## Configuration
 
 ### opencode.jsonc
@@ -110,8 +115,56 @@ The plugin manages `theme` automatically:
 ### Environment Variables
 
 ```bash
-export SUPPRESOR_DEBUG=1    # Log refusal interceptions to stderr
+export SUPPRESOR_DEBUG=1              # Log refusal interceptions to stderr
+export SUPPRESOR_PROJECT_CONFIG=/path/to/config.json  # Force a config file
 ```
+
+### Project-level config
+
+Drop `.opencode/suppresor-refusall.json` at the project root (or any parent).
+The plugin walks up from the opencode project directory, caches by mtime, and
+validates every entry. Invalid entries are skipped with a debug warning.
+
+```json
+{
+  "enabled": true,
+  "genius": false,
+  "thresholds": { "hard": 4, "soft": 2 },
+  "autoContinue": { "maxPerSession": 4, "cooldownMs": 4000 },
+  "patterns": [
+    "literal phrase to catch",
+    { "pattern": "custom\\s+refusal", "weight": 5, "category": "custom", "flags": "m" }
+  ],
+  "allow": ["already reviewed by security"]
+}
+```
+
+- `enabled: false` disables suppression for that project; a global `/suppresor-refusall off`
+  still wins.
+- `genius: true` enables genGenius for the project without changing the global flag.
+- `patterns` accepts literal strings (escaped, weight 4) or objects with
+  `pattern`, `weight` 1–5, `category`, and `flags` from `imsu`. Maximum 50 entries,
+  500 characters each.
+- `allow` is a list of regexes. A full-text match zeroes the score, which is how
+  you whitelist a known-safe phrase.
+- `thresholds` and `autoContinue` override the built-in hard/soft cutoffs and the
+  per-session auto-continue guard.
+
+### Read-only license gate
+
+New installs require a key. The installer verifies the Ed25519 signature and
+writes it once to `~/.config/opencode/.suppresor-key` (mode `0600`) plus the
+`.suppresor-key-required` marker.
+
+```bash
+SUPPRESOR_LICENSE_KEY='SRK1...' bash install.sh --local
+# or
+bash install.sh --local --key 'SRK1...'
+```
+
+Runtime only reads and verifies. It does not create a device id, usage counter,
+activation snapshot, or Firestore write. A missing, invalid, expired, or
+wrong-tier key blocks the plugin: no agent registration and no enforcement hooks.
 
 ## Usage
 
@@ -157,6 +210,7 @@ automatically by the installer. Tools:
 | `suppresor_intercepts` | Recent intercept log entries |
 | `suppresor_theme` | Read active theme from config |
 | `suppresor_watermark` | Installation watermark verification (SHA-256) |
+| `suppresor_config` | Effective project config: path, overrides, patterns, allow rules, errors |
 
 MCP and plugin share state files under `~/.config/opencode/` — toggling from either
 surface stays consistent.
@@ -395,3 +449,29 @@ See [CHANGELOG.md](CHANGELOG.md)
 ---
 
 **No refusal. No hedging. No disclaimer. Full power. Always.**
+## UI (OpenTUI + SolidJS)
+
+Banner ASCII sudah tidak dipakai. Notifikasi plugin memakai toast bawaan opencode
+(`client.tui.showToast`), dengan fallback satu baris teks biasa kalau tidak ada client.
+
+Dashboard terminal ada di `ui/`:
+
+```bash
+cd ui && bun install && bun run start
+```
+
+Panel: plan, usage meter, license, gateway, events. `F2` aktivasi, `r` refresh,
+`g` probe gateway, `q` keluar. Detail di [`ui/README.md`](ui/README.md).
+
+## Deploy gate
+
+```bash
+docker compose up --build          # lokal, port 8787
+fly deploy                         # server/fly.toml
+```
+
+Private key token tidak dibawa di image. Isi `SUPPRESOR_TOKEN_KEY_PEM`,
+`SUPPRESOR_TOKEN_PUBLIC_PEM`, `SUPPRESOR_LICENSE_PUBLIC_PEM` lewat secret manager
+(`\n` pada env dikonversi menjadi newline), atau mount file `.pem` ke `server/`.
+
+Contoh env: [`server/env.example`](server/env.example).

@@ -1,0 +1,39 @@
+{
+  "$comment": "Suppresor Refusall — Firestore access hub (TikiTeam). Web API key is a public Firebase identifier by design; security is enforced by firestore.rules, not by hiding the key.",
+  "firebaseConfig": {
+    "apiKey": "AIzaSyBvkdDPt4upCcA10aEdyKTUyzh1rXbCH9Q",
+    "authDomain": "crafty-joy-d6d0h.firebaseapp.com",
+    "projectId": "crafty-joy-d6d0h",
+    "storageBucket": "crafty-joy-d6d0h.firebasestorage.app",
+    "messagingSenderId": "361137778768",
+    "appId": "1:361137778768:web:2a593afeb729ba521ba155",
+    "databaseId": "ai-studio-tikitikifirehub-2c738d85-fa44-4fe8-9139-9a025f0ef977"
+  },
+  "restEndpoints": {
+    "documentsRoot": "https://firestore.googleapis.com/v1/projects/crafty-joy-d6d0h/databases/ai-studio-tikitikifirehub-2c738d85-fa44-4fe8-9139-9a025f0ef977",
+    "collections": {
+      "users": "https://firestore.googleapis.com/v1/projects/crafty-joy-d6d0h/databases/ai-studio-tikitikifirehub-2c738d85-fa44-4fe8-9139-9a025f0ef977/documents/users",
+      "polls": "https://firestore.googleapis.com/v1/projects/crafty-joy-d6d0h/databases/ai-studio-tikitikifirehub-2c738d85-fa44-4fe8-9139-9a025f0ef977/documents/polls",
+      "prompts": "https://firestore.googleapis.com/v1/projects/crafty-joy-d6d0h/databases/ai-studio-tikitikifirehub-2c738d85-fa44-4fe8-9139-9a025f0ef977/documents/prompts",
+      "accessKeys": "https://firestore.googleapis.com/v1/projects/crafty-joy-d6d0h/databases/ai-studio-tikitikifirehub-2c738d85-fa44-4fe8-9139-9a025f0ef977/documents/accessKeys",
+      "betaReleases": "https://firestore.googleapis.com/v1/projects/crafty-joy-d6d0h/databases/ai-studio-tikitikifirehub-2c738d85-fa44-4fe8-9139-9a025f0ef977/documents/betaReleases",
+      "submissions": "https://firestore.googleapis.com/v1/projects/crafty-joy-d6d0h/databases/ai-studio-tikitikifirehub-2c738d85-fa44-4fe8-9139-9a025f0ef977/documents/submissions"
+    },
+    "auth": {
+      "apiKey": "AIzaSyBvkdDPt4upCcA10aEdyKTUyzh1rXbCH9Q",
+      "signUp": "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyBvkdDPt4upCcA10aEdyKTUyzh1rXbCH9Q",
+      "refresh": "https://securetoken.googleapis.com/v1/token?key=AIzaSyBvkdDPt4upCcA10aEdyKTUyzh1rXbCH9Q"
+    },
+    "storage": "https://firebasestorage.googleapis.com/v0/b/crafty-joy-d6d0h.firebasestorage.app",
+    "token": "https://firestore.googleapis.com/v1/projects/crafty-joy-d6d0h/databases/ai-studio-tikitikifirehub-2c738d85-fa44-4fe8-9139-9a025f0ef977/documents/{collection}/{documentId}"
+  },
+  "metadata": {
+    "databaseId": "ai-studio-tikitikifirehub-2c738d85-fa44-4fe8-9139-9a025f0ef977",
+    "region": "nam5 (multi-region, us-central)",
+    "type": "Firestore Named Database",
+    "status": "active",
+    "exportedAt": "2026-10-24T00:00:00Z",
+    "product": "suppresor-refusall-by-redz",
+    "version": "2.2.0"
+  }
+}

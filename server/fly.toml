@@ -1,0 +1,23 @@
+app = "suppresor-gate"
+primary_region = "sin"
+
+[build]
+  dockerfile = "server/Dockerfile"
+
+[env]
+  SUPPRESOR_GATE_PORT = "8787"
+  SUPPRESOR_GATE_NOPERSIST = "1"
+
+[http_service]
+  internal_port = 8787
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[http_service.checks]]
+  interval = "30s"
+  timeout = "3s"
+  grace_period = "5s"
+  method = "GET"
+  path = "/healthz"

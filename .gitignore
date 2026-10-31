@@ -1,0 +1,14 @@
+admin/license-private.pem
+.firestore-client-token.json
+.suppresor-*
+server/token-key-private.pem
+server/state.json
+ui/node_modules
+ui/dist
+server/.env
+.env
+.env.firestore
+firestore.env
+bridge/node_modules
+node_modules
+*.log

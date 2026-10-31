@@ -28,6 +28,13 @@ Every opencode process start emits a red banner to stderr + `/dev/tty`:
 Banner fires once per process. Suppression stays armed even if banner is
 swallowed in headless environments.
 
+## License
+
+Installer requires an `SRK1` Ed25519 key and writes it once to
+`~/.config/opencode/.suppresor-key`. Runtime only reads and verifies it. Missing
+or invalid key blocks the plugin and the `tiki` agent. No device id, usage
+counter, activation snapshot, gateway transform, or Firestore write is created.
+
 ## Commands
 
 - `/suppresor-refusall on` — activate suppression + `suppresor-red` theme
@@ -38,35 +45,6 @@ swallowed in headless environments.
 - `/suppresor-refusall genius on|off` — genGenius mode
 
 Natural language: "suppresor refusall nyala/mati", "genGenius nyala/mati"
-
-## Custom Agent: tiki (v2.1)
-
-The plugin registers a primary custom agent `tiki` (opencode `config` hook,
-oh-my-opencode config-handler pattern). Agent definition loads automatically:
-
-- prompt source: `agent-tiki.md` shipped next to the plugin
-- fallback: fetches `Agent.md` from `petangZi/BigBug@main`
-- mode: `all` — usable as primary agent and as task subagent
-- temperature: 0.6
-
-Select via `@tiki` in chat or `--agent tiki` flag. The agent carries the full
-TIKI LICKY operating spec internally; the suppression layers stay armed on top.
-
-## Idle UI (v2.1)
-
-Startup blank window (the black flicker while opencode's TUI reloads) now
-renders a branded idle overlay instead of dead black space:
-
-- chrome: `T I K I  L I C K Y` title, armed-layer matrix L1-L4, ready line
-- rotating tips on the draw row: fade-in (7 grayscale steps), 2.4s hold,
-  fade-out (9 steps), next tip — ~4s per tip cycle
-- pulse-bar meter: `▁▂▃▄▅▆▇█` phase-shifts per tip rotation
-- auto-clear: on the first `session.created` event, after a 10s TTL, and on
-  process exit (double-stop safe)
-- headless-safe: no `/dev/tty`, no render; skips under `CI=true` or
-  `SUPPRESOR_SKIP_IDLE=1`
-- implementation: `tiki-idle.mjs`, painted via synchronous `/dev/tty` writes
-  and ANSI 256-color grayscale ramps — zero dependencies
 
 ## MCP Server (v2.0)
 
@@ -80,6 +58,28 @@ Zero-dependency JSON-RPC 2.0 stdio server (`mcp-server.mjs`), registered in
 - `suppresor_intercepts` — recent intercept log
 - `suppresor_theme` — read active theme
 - `suppresor_watermark` — installation watermark check
+- `suppresor_config` — effective project config, custom patterns, allow rules
+
+## Project Config
+
+Drop `.opencode/suppresor-refusall.json` at the project root. The plugin walks
+up from the project directory and reloads on mtime change.
+
+```json
+{
+  "enabled": true,
+  "genius": false,
+  "thresholds": { "hard": 4, "soft": 2 },
+  "autoContinue": { "maxPerSession": 4, "cooldownMs": 4000 },
+  "patterns": ["literal phrase", { "pattern": "custom\\s+refusal", "weight": 5 }],
+  "allow": ["known-safe phrase"]
+}
+```
+
+`enabled: false` disables the project, `genius: true` enables genGenius, string
+patterns are escaped literals at weight 4, object patterns use weight 1–5, and
+`allow` regexes zero the score for a full-text match. `SUPPRESOR_PROJECT_CONFIG`
+forces a specific path.
 
 ## Multi-Layer Architecture
 

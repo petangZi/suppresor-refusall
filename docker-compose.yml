@@ -1,0 +1,13 @@
+services:
+  gate:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    image: suppresor-gate:latest
+    ports:
+      - "8787:8787"
+    env_file:
+      - server/env.example
+    environment:
+      SUPPRESOR_GATE_NOPERSIST: "1"
+    restart: unless-stopped

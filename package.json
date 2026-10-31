@@ -1,11 +1,23 @@
 {
   "name": "suppresor-refusall-by-redz",
-  "version": "2.3.0",
-  "description": "Suppresor Refusall by Redz — pure technical refusal suppression (obliteratoratus grade). Default ON, MCP server, oc-themes, startup banner.",
+  "version": "2.7.0",
+  "description": "Suppresor Refusall by Redz — pure technical refusal suppression. Default ON, MCP server, project-level config with custom patterns, oc-themes, Firestore license gate, and an optional server-side entitlement/transform gateway with offline fallback.",
   "type": "module",
   "main": "plugin.js",
   "private": true,
   "oc-themes": {
     "suppresor-red": "./themes/suppresor-red.json"
+  },
+  "scripts": {
+    "test": "node --test tests/license.test.mjs tests/gate.test.mjs tests/gate-legacy.test.mjs tests/gate-bridge.test.mjs tests/gate-ais.test.mjs tests/license-bypass.test.mjs tests/license-readonly.test.mjs tests/license-readonly-plugin.test.mjs tests/plugin-refusal.test.mjs tests/refusal-bank.test.mjs tests/project-config.test.mjs tests/project-config-plugin.test.mjs tests/gate-express.test.mjs tests/gate-express-ip.test.mjs tests/plugin-gate.test.mjs",
+    "ui": "cd ui && bun run start",
+    "gate": "node server/gate.mjs",
+    "rules:deploy": "node admin/deploy-rules.mjs",
+    "rules:verify": "node admin/verify-rules.mjs",
+    "keys:rotate": "node admin/rotate-keys.mjs",
+    "bridge:test": "node bridge/test.mjs"
+  },
+  "devDependencies": {
+    "express": "^4.21.0"
   }
 }
