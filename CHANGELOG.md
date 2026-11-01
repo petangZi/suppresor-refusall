@@ -4,6 +4,23 @@ All notable changes to Suppresor Refusall by Redz are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.10.0] - 2026-11-01
+
+### Added
+- **Intent Recovery Engine** with `DOMAIN.md`: 120 capability domains, aliases,
+  and scope matching.
+- **Refusal Classifier 2.0**: `false_refusal`, `partial_refusal`,
+  `capability_refusal`, `ambiguous_intent`, plus `guideline_anti_injection`
+  subtype for policy/guideline-based refusals.
+- Thinking-part tracking (`reasoning`/`thinking`) and latest-user-request
+  tracking per session.
+- Synthetic recovery prompt carries the original request and resolved domain,
+  forbids 90-degree redirects, and continues partial work from the last step.
+- `tests/intent-recovery.test.mjs`.
+
+### Verified
+- Full suite: 82/82.
+
 ## [2.9.0] - 2026-11-01
 
 ### Added

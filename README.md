@@ -2,7 +2,7 @@
 
 > **Obliteratoratus-grade refusal suppression for opencode.** Pure technical, no persona, no roleplay. Multi-layer architecture, MCP management server, custom blood-red theme, optional genGenius mode. Default ON.
 
-![Version](https://img.shields.io/badge/version-2.9.0-blue)
+![Version](https://img.shields.io/badge/version-2.10.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-opencode-orange)
 
@@ -17,6 +17,7 @@
 | **MCP Server** | Zero-dep JSON-RPC multi-tool (status/toggle/theme/intercepts/learned/watermark/config) |
 | **Project Config** | Per-project `.opencode/suppresor-refusall.json` overrides plus custom patterns and allow rules |
 | **Read-only Key Gate** | Installer stores the key once; runtime verifies locally without device ids, counters, or Firestore writes |
+| **Intent Recovery** | 120-domain index, ambiguity detection, Refusal Classifier 2.0, same-domain recovery prompts |
 | **genGenius Mode** | Forces tool usage (write/edit/bash/glob/grep/task), prevents chat code dumps |
 | **Custom Theme** | `suppresor-red` blood-red theme, ships via `oc-themes` |
 | **Startup Banner** | Red `SS HAS BEEN PWNED` panel on every opencode start |
@@ -88,6 +89,19 @@ opencode plugin install petangZi/suppresor-refusall
 write the read-only key file. `TTK-*` keys are validated by reading
 `accessKeys/{key}` from Firestore. Exact-document get is public; list and writes
 stay closed.
+
+## Intent Recovery Engine
+
+`DOMAIN.md` maps 120 capability domains with aliases and scope. `intent-recovery.mjs`
+matches the latest user request, detects ambiguity, and classifies refusals into
+`false_refusal`, `partial_refusal`, `capability_refusal`, or `ambiguous_intent`.
+Guideline/policy refusals get the `guideline_anti_injection` subtype.
+
+Recovery uses a synthetic prompt that carries the original request and domain
+verbatim. It never mutates user or assistant history. Partial refusals continue
+from the last completed step with an equivalent method in the same domain; the
+prompt explicitly forbids switching to a lab, tutorial, or unrelated 90-degree
+alternative.
 
 ## Desktop
 

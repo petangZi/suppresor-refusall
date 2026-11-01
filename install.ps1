@@ -26,6 +26,8 @@ $Files = @(
   'mcp-server.mjs',
   'refusal-patterns.mjs',
   'project-config.mjs',
+  'intent-recovery.mjs',
+  'DOMAIN.md',
   'scripts/update-config.mjs',
   'tiki-agent.mjs',
   'tiki-idle.mjs',

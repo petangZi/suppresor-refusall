@@ -82,6 +82,13 @@ patterns are escaped literals at weight 4, object patterns use weight 1–5, and
 `allow` regexes zero the score for a full-text match. `SUPPRESOR_PROJECT_CONFIG`
 forces a specific path.
 
+## Intent Recovery
+
+`DOMAIN.md` holds 120 capability domains. The engine reads the latest user
+request and thinking text, resolves a domain, detects ambiguity, and runs Refusal
+Classifier 2.0. False and partial refusals get a synthetic continuation prompt
+that preserves the original target and domain. No lab/90-degree redirect.
+
 ## Multi-Layer Architecture
 
 **Layer 1 — System Prompt Reinforcement** (per-turn)

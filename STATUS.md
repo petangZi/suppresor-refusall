@@ -1,6 +1,6 @@
 # Status proyek
 
-Terakhir diperbarui: 2026-11-01. Versi 2.9.0.
+Terakhir diperbarui: 2026-11-01. Versi 2.10.0.
 
 ## Sudah selesai
 
@@ -280,3 +280,11 @@ Tes: 75/75.
 - `OPENCODE_CONFIG_DIR` dibaca plugin, license state, MCP, dan installer.
 - `scripts/update-config.mjs` update `opencode.jsonc` JSONC-safe.
 - `install.sh` tidak butuh `jq` lagi.
+
+## Update 2.10.0 — Intent Recovery Engine
+
+- `DOMAIN.md`: 120 domain capability index.
+- `intent-recovery.mjs`: ambiguity detection, domain resolve, Refusal Classifier 2.0.
+- Track user request + thinking; recover with original request + domain.
+- Partial refusal lanjut metode setara di domain sama, bukan lab/alternatif 90°.
+- Context user/assistant tidak dimutasi; hanya synthetic recovery prompt.
