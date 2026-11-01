@@ -81,6 +81,10 @@ export function decodeFields(fields) {
 
 let tokenState = null; // { idToken, refreshToken, expiresAt, uid }
 
+function noTokenCache() {
+  return process.env.SUPPRESOR_NO_TOKEN_CACHE === '1';
+}
+
 function tokenDirCachePath() {
   if (process.env.SUPPRESOR_TOKEN_CACHE) return process.env.SUPPRESOR_TOKEN_CACHE;
   // Tests and alternate profiles must not share one anonymous identity, or the
@@ -93,6 +97,7 @@ function tokenDirCachePath() {
 }
 
 function readTokenCache() {
+  if (noTokenCache()) return null;
   try { return JSON.parse(readFileSync(tokenDirCachePath(), 'utf8')); } catch { return null; }
 }
 
@@ -152,10 +157,12 @@ async function ensureAnonAuthInner() {
     const s = await anonSignUp();
     tokenState = { idToken: s.idToken, refreshToken: s.refreshToken, uid: s.localId, expiresAt: now + (parseInt(s.expiresIn, 10) || 3600) * 1000 };
   }
-  try {
-    const { writeFileSync } = await import('node:fs');
-    writeFileSync(tokenDirCachePath(), JSON.stringify({ refreshToken: tokenState.refreshToken, uid: tokenState.uid }), { mode: 0o600 });
-  } catch { /* cache is optional */ }
+  if (!noTokenCache()) {
+    try {
+      const { writeFileSync } = await import('node:fs');
+      writeFileSync(tokenDirCachePath(), JSON.stringify({ refreshToken: tokenState.refreshToken, uid: tokenState.uid }), { mode: 0o600 });
+    } catch { /* cache is optional */ }
+  }
   return { idToken: tokenState.idToken, uid: tokenState.uid };
 }
 

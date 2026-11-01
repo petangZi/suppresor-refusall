@@ -4,6 +4,26 @@ All notable changes to Suppresor Refusall by Redz are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.8.0] - 2026-11-01
+
+### Fixed
+- **`TTK-*` keys are accepted again.** The read-only gate now resolves the exact
+  `accessKeys/{key}` document in Firestore project `crafty-joy-d6d0h`, named
+  database `ai-studio-tikitikifirehub-2c738d85-fa44-4fe8-9139-9a025f0ef977`.
+- Installer no longer rejects `TTK-*`; it verifies against Firestore before writing
+  `.suppresor-key`. `SRK1` remains an optional offline-signed admin key.
+- Firestore validation checks `active`/`status`, `expiresAt`, `daysRemaining`,
+  `durationDays`, `maxUses`, and `uses`, but never registers a device or increments
+  usage. Key verification disables the auth token disk cache.
+- Not-found keys now report `key tidak ditemukan di Firestore accessKeys` instead
+  of a generic Firestore read failure.
+
+### Verified
+- `TTK-25A0-4906-4AEA` -> Firestore read OK, installer exit 0.
+- Unknown `TTK-F0FD-345F-DC82` -> exit 1, key not written.
+- Runtime TTK key -> hooks active, no `.suppresor-license` or `.suppresor-device`.
+- Full suite: 75/75.
+
 ## [2.7.0] - 2026-10-31
 
 ### Changed

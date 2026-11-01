@@ -1,6 +1,6 @@
 # Status proyek
 
-Terakhir diperbarui: 2026-10-31. Versi 2.7.0.
+Terakhir diperbarui: 2026-11-01. Versi 2.8.0.
 
 ## Sudah selesai
 
@@ -247,12 +247,25 @@ Tes: 70/70.
 
 ## Update 2.7.0 — key read-only
 
-- Installer wajib key `SRK1`; key ditulis sekali ke `.suppresor-key` mode 0600.
+- Installer wajib key; key ditulis sekali ke `.suppresor-key` mode 0600.
 - Runtime hanya baca + verifikasi Ed25519. Tidak ada device id, counter, snapshot,
   gateway transform, heartbeat, atau tulis Firestore.
 - Key absen/salah/expired/tier salah: plugin return `{}`, agent `tiki` tidak
   didaftarkan, semua hook mati.
 - Marker `.suppresor-key-required` memaksa gate tetap aktif walau file key dihapus.
 - `/suppresor-refusall key` tidak lagi menulis; key install-time yang authoritative.
+
+Tes: 75/75.
+
+## Update 2.8.0 — TTK Firestore read-only
+
+- Key `TTK-*` dibaca dari `accessKeys/{key}` di Firestore project
+  `crafty-joy-d6d0h`, database
+  `ai-studio-tikitikifirehub-2c738d85-fa44-4fe8-9139-9a025f0ef977`.
+- Installer menerima TTK; verifikasi Firestore sebelum menulis `.suppresor-key`.
+- Tidak ada device registration, usage increment, `.suppresor-license`, atau
+  `.suppresor-device` saat verifikasi TTK.
+- `SRK1` tetap opsional untuk key admin offline.
+- Key tidak ditemukan = plugin return `{}`, tidak bisa masuk.
 
 Tes: 75/75.

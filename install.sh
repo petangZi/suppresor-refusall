@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Suppresor Refusall by Redz — Automated Installer
-# Run: SUPPRESOR_LICENSE_KEY='SRK1...' bash -c "$(curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/install.sh)"
-# Or:  curl -fsSL .../install.sh | bash -s -- --key 'SRK1...'
-# Local: bash install.sh --local --key 'SRK1...'
+# Run: SUPPRESOR_LICENSE_KEY='TTK-XXXX-XXXX-XXXX' bash -c "$(curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/install.sh)"
+# Or:  curl -fsSL .../install.sh | bash -s -- --key 'TTK-XXXX-XXXX-XXXX'
+# Local: bash install.sh --local --key 'TTK-XXXX-XXXX-XXXX'
 
 set -euo pipefail
 
@@ -67,10 +67,10 @@ while [[ $# -gt 0 ]]; do
     --key) LICENSE_KEY="${2:-}"; shift 2 ;;
     --key=*) LICENSE_KEY="${1#--key=}"; shift ;;
     --help|-h)
-      echo "Usage: $0 [--local] [--key <SRK1...>]"
+      echo "Usage: $0 [--local] [--key <TTK-XXXX-XXXX-XXXX>]"
       echo "  --local  Install from current directory (extracted package)"
       echo "  --key    License key; required for install"
-      echo "  curl ... | bash -s -- --key SRK1..."
+      echo "  curl ... | bash -s -- --key TTK-XXXX-XXXX-XXXX"
       exit 0
       ;;
     *) shift ;;
@@ -109,7 +109,7 @@ collect_key() {
     return
   fi
   if [[ -t 0 ]]; then
-    read -rsp "License key (SRK1...): " LICENSE_KEY
+    read -rsp "License key (TTK-...): " LICENSE_KEY
     echo ""
   fi
   if [[ -z "$LICENSE_KEY" ]]; then
@@ -121,11 +121,8 @@ verify_license_key() {
   if [[ ! -f "$PLUGIN_DIR/license-key.mjs" ]]; then
     error "Read-only license verifier missing"
   fi
-  if [[ "$LICENSE_KEY" == TTK-* ]]; then
-    error "Legacy TTK-* key tidak didukung gate read-only. Pakai key SRK1, atau jalankan gate online lalu set SUPPRESOR_GATE_URL."
-  fi
   if ! node "$PLUGIN_DIR/license-key.mjs" --verify "$LICENSE_KEY" >/dev/null 2>&1; then
-    error "License key invalid or expired (format yang diterima: SRK1.<payload>.<signature>)"
+    error "License key invalid, expired, atau tidak ditemukan di Firestore accessKeys"
   fi
   success "License key verified"
 }

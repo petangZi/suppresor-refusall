@@ -1,6 +1,6 @@
-// license-key.mjs — read-only Ed25519 license gate.
-// The installer writes the key once. Runtime reads it and verifies locally;
-// this module never writes device ids, snapshots, counters, or server state.
+// license-key.mjs — read-only license gate.
+// TTK-* keys are read from Firestore accessKeys/{key}; SRK1 keys are verified
+// offline. No device ids, usage counters, Firestore writes, or local snapshots.
 
 import { existsSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -89,25 +89,12 @@ export function readLicenseKey() {
   return keyGateRequired() ? readLegacyActivationKey() : null;
 }
 
-export function readOnlyLicenseState() {
-  const key = readLicenseKey();
+export function isTtkKey(keyStr) {
+  return /^TTK-[A-Za-z0-9-]{6,80}$/i.test(String(keyStr || '').trim());
+}
+
+function stateFromResult(key, result) {
   const checkedAt = Date.now();
-  if (!key) {
-    return {
-      allowed: false,
-      blocked: true,
-      origin: 'readonly',
-      tier: 'none',
-      uses: 0,
-      usesLeft: 0,
-      freeLimit: 0,
-      keyRef: null,
-      activation: null,
-      checkedAt,
-      message: 'key belum dimasukkan — jalankan installer dengan --key atau SUPPRESOR_LICENSE_KEY',
-    };
-  }
-  const result = verifyLicenseKey(key);
   if (!result.ok) {
     return {
       allowed: false,
@@ -117,30 +104,115 @@ export function readOnlyLicenseState() {
       uses: 0,
       usesLeft: 0,
       freeLimit: 0,
-      keyRef: null,
+      keyRef: key || null,
       activation: null,
       checkedAt,
       message: result.reason,
     };
   }
+  const payload = result.payload || {};
   return {
     allowed: true,
     blocked: false,
     origin: 'readonly',
-    tier: result.payload.tier,
+    tier: payload.tier || 'pro',
     uses: 0,
     usesLeft: 9999,
     freeLimit: 0,
-    keyRef: result.payload.id || null,
-    activation: { type: 'signed', key, id: result.payload.id || null, tier: result.payload.tier, exp: result.payload.exp || null },
+    keyRef: payload.id || key || null,
+    activation: {
+      type: result.source === 'firestore' ? 'firestore' : 'signed',
+      key,
+      id: payload.id || key || null,
+      tier: payload.tier || 'pro',
+      exp: payload.exp || null,
+    },
     checkedAt,
-    message: `key valid — tier ${result.payload.tier} (read-only)`,
+    message: result.source === 'firestore'
+      ? `key valid — tier ${payload.tier || 'pro'} (Firestore read-only)`
+      : `key valid — tier ${payload.tier || 'pro'} (read-only)`,
   };
+}
+
+export async function verifyFirestoreKey(keyStr) {
+  const key = String(keyStr || '').trim();
+  if (!isTtkKey(key)) return { ok: false, reason: 'format TTK tidak valid' };
+  process.env.SUPPRESOR_NO_TOKEN_CACHE = '1';
+  let doc;
+  try {
+    const client = await import('./firestore-client.js');
+    try {
+      doc = await client.getDocumentPublic('accessKeys', key);
+    } catch {
+      try {
+        doc = await client.getDocument('accessKeys', key);
+      } catch (e) {
+        if (/not found|NOT_FOUND|404/i.test(String(e.message))) {
+          return { ok: false, reason: `key tidak ditemukan di Firestore accessKeys: ${key}` };
+        }
+        return { ok: false, reason: `Firestore tidak bisa dibaca: ${e.message}` };
+      }
+    }
+  } catch (e) {
+    return { ok: false, reason: `Firestore client gagal: ${e.message}` };
+  }
+  if (!doc) return { ok: false, reason: `key tidak ditemukan di Firestore accessKeys: ${key}` };
+
+  const status = String(doc.status || (doc.active === true ? 'ACTIVE' : '')).toUpperCase();
+  const active = doc.active === true || status === 'ACTIVE';
+  const unlimited = doc.durationDays === -1 || doc.daysRemaining === 99999 || doc.maxUses === -1;
+  const expiresAt = typeof doc.expiresAt === 'string' ? Date.parse(doc.expiresAt) : NaN;
+  const expired = (Number.isFinite(expiresAt) && expiresAt < Date.now())
+    || (!unlimited && typeof doc.daysRemaining === 'number' && doc.daysRemaining <= 0);
+  const maxUses = typeof doc.maxUses === 'number' ? doc.maxUses : -1;
+  const uses = typeof doc.uses === 'number' ? doc.uses : (typeof doc.usesCount === 'number' ? doc.usesCount : 0);
+
+  if (!active) return { ok: false, reason: `key tidak aktif (${status || 'unknown'})` };
+  if (expired) return { ok: false, reason: 'key expired' };
+  if (!unlimited && maxUses > 0 && uses >= maxUses) return { ok: false, reason: 'kuota key habis' };
+
+  return {
+    ok: true,
+    source: 'firestore',
+    payload: {
+      id: key,
+      tier: doc.tier || 'pro',
+      exp: Number.isFinite(expiresAt) ? Math.floor(expiresAt / 1000) : null,
+      unlimited,
+      uses,
+      maxUses,
+    },
+  };
+}
+
+export async function verifyAnyKey(keyStr) {
+  const key = String(keyStr || '').trim();
+  return isTtkKey(key) ? verifyFirestoreKey(key) : verifyLicenseKey(key);
+}
+
+export function readOnlyLicenseState() {
+  const key = readLicenseKey();
+  if (!key) return stateFromResult(null, { ok: false, reason: 'key belum dimasukkan — jalankan installer dengan --key atau SUPPRESOR_LICENSE_KEY' });
+  if (isTtkKey(key)) {
+    return {
+      ...stateFromResult(key, { ok: false, reason: 'menunggu verifikasi Firestore' }),
+      pending: true,
+      message: 'menunggu verifikasi Firestore',
+    };
+  }
+  return stateFromResult(key, verifyLicenseKey(key));
+}
+
+export async function readOnlyLicenseStateAsync() {
+  const key = readLicenseKey();
+  if (!key) return stateFromResult(null, { ok: false, reason: 'key belum dimasukkan — jalankan installer dengan --key atau SUPPRESOR_LICENSE_KEY' });
+  const result = isTtkKey(key) ? await verifyFirestoreKey(key) : verifyLicenseKey(key);
+  return stateFromResult(key, result);
 }
 
 const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain && process.argv[2] === '--verify') {
-  const result = verifyLicenseKey(process.argv[3]);
+  const result = await verifyAnyKey(process.argv[3]);
   console.log(JSON.stringify(result));
   process.exit(result.ok ? 0 : 1);
 }

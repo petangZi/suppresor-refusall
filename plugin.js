@@ -398,9 +398,12 @@ export const SuppresorRefusallPlugin = async ({ client, directory } = {}) => {
     });
   }
   setNotifier(notifyLocal);
-  if (keyGateRequired() && !allowedNow()) {
-    notifyLocal({ level: 'error', title: 'license key blocked', message: gateState().message });
-    return {};
+  if (keyGateRequired()) {
+    await spendUse();
+    if (!allowedNow()) {
+      notifyLocal({ level: 'error', title: 'license key blocked', message: gateState().message });
+      return {};
+    }
   }
   showBanner();
   showIdleUI();

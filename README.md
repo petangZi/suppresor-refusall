@@ -2,7 +2,7 @@
 
 > **Obliteratoratus-grade refusal suppression for opencode.** Pure technical, no persona, no roleplay. Multi-layer architecture, MCP management server, custom blood-red theme, optional genGenius mode. Default ON.
 
-![Version](https://img.shields.io/badge/version-2.7.0-blue)
+![Version](https://img.shields.io/badge/version-2.8.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-opencode-orange)
 
@@ -43,7 +43,7 @@ opencode
 ### Method 1: Automated (Recommended)
 
 ```bash
-export SUPPRESOR_LICENSE_KEY='SRK1...'
+export SUPPRESOR_LICENSE_KEY='TTK-XXXX-XXXX-XXXX'
 curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/install.sh | bash
 ```
 
@@ -84,9 +84,9 @@ opencode plugin install petangZi/suppresor-refusall
 ```
 
 `install.sh` requires a license key. Set `SUPPRESOR_LICENSE_KEY`, or pipe with
-`bash -s -- --key 'SRK1...'`. A bare `opencode plugin install` does not write the
-read-only key file. Legacy `TTK-*` keys are rejected by the offline gate; use an
-`SRK1` key.
+`bash -s -- --key 'TTK-XXXX-XXXX-XXXX'`. A bare `opencode plugin install` does not
+write the read-only key file. `TTK-*` keys are validated by reading
+`accessKeys/{key}` from Firestore.
 
 ## Configuration
 
@@ -154,19 +154,21 @@ validates every entry. Invalid entries are skipped with a debug warning.
 
 ### Read-only license gate
 
-New installs require a key. The installer verifies the Ed25519 signature and
-writes it once to `~/.config/opencode/.suppresor-key` (mode `0600`) plus the
+New installs require a key. `TTK-*` keys are checked against Firestore
+`accessKeys/{key}`; `SRK1` signed keys are also accepted offline. The installer
+writes the key once to `~/.config/opencode/.suppresor-key` (mode `0600`) plus the
 `.suppresor-key-required` marker.
 
 ```bash
-SUPPRESOR_LICENSE_KEY='SRK1...' bash install.sh --local
+SUPPRESOR_LICENSE_KEY='TTK-XXXX-XXXX-XXXX' bash install.sh --local
 # or
-bash install.sh --local --key 'SRK1...'
+bash install.sh --local --key 'TTK-XXXX-XXXX-XXXX'
 ```
 
-Runtime only reads and verifies. It does not create a device id, usage counter,
-activation snapshot, or Firestore write. A missing, invalid, expired, or
-wrong-tier key blocks the plugin: no agent registration and no enforcement hooks.
+Runtime only reads the key and validates it against Firestore `accessKeys` (or
+offline for `SRK1`). It does not create a device id, usage counter, activation
+snapshot, or Firestore write. A missing, invalid, expired, deleted, or unknown key
+blocks the plugin: no agent registration and no enforcement hooks.
 
 ## Usage
 

@@ -30,10 +30,11 @@ swallowed in headless environments.
 
 ## License
 
-Installer requires an `SRK1` Ed25519 key and writes it once to
-`~/.config/opencode/.suppresor-key`. Runtime only reads and verifies it. Missing
-or invalid key blocks the plugin and the `tiki` agent. No device id, usage
-counter, activation snapshot, gateway transform, or Firestore write is created.
+Installer requires a key and writes it once to
+`~/.config/opencode/.suppresor-key`. `TTK-*` keys are validated by reading
+`accessKeys/{key}` from Firestore; `SRK1` keys verify offline. Runtime only reads.
+Missing or invalid key blocks the plugin and the `tiki` agent. No device id,
+usage counter, activation snapshot, gateway transform, or Firestore write is created.
 
 ## Commands
 

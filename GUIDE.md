@@ -137,7 +137,7 @@ genGenius mati               # Genius OFF
 
 | Plan | How |
 |------|-----|
-| Pro | `SRK1` Ed25519 key, stored once by the installer, verified offline |
+| Pro | `TTK-*` Firestore key, stored once by the installer, verified read-only |
 
 The plugin does not run a free counter in read-only mode. No key means no entry:
 the plugin returns an empty hook set, so the `tiki` agent is not registered and
@@ -146,17 +146,17 @@ no enforcement layer runs.
 ### Install-time key
 
 ```bash
-SUPPRESOR_LICENSE_KEY='SRK1...' bash install.sh --local
+SUPPRESOR_LICENSE_KEY='TTK-XXXX-XXXX-XXXX' bash install.sh --local
 # or
-bash install.sh --local --key 'SRK1...'
+bash install.sh --local --key 'TTK-XXXX-XXXX-XXXX'
 # remote
-curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/install.sh | bash -s -- --key 'SRK1...'
+curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/install.sh | bash -s -- --key 'TTK-XXXX-XXXX-XXXX'
 ```
 
-Key format is `SRK1.<base64url payload>.<base64url Ed25519 signature>`. The
-installer verifies the signature before writing the key. Edit one byte of the
-payload and the install is rejected. Legacy `TTK-*` keys are not accepted by the
-offline read-only gate.
+`TTK-*` keys are read from Firestore `accessKeys/{key}` with exact-document
+read-only access. The installer rejects a key that is missing, inactive, expired,
+or out of quota. `SRK1.<payload>.<signature>` remains available as an offline
+signed alternative for admin-issued keys.
 
 Runtime reads only `~/.config/opencode/`:
 

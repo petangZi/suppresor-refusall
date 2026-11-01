@@ -9,7 +9,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash, randomUUID } from 'node:crypto';
 import { startSession as gateStart, gateUrl, verifyKey as gateVerify } from './gate-client.mjs';
-import { keyGateRequired, readOnlyLicenseState, verifyLicenseKey } from './license-key.mjs';
+import { keyGateRequired, readOnlyLicenseState, readOnlyLicenseStateAsync, verifyLicenseKey } from './license-key.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -402,7 +402,7 @@ export async function spendUse() {
   }
 
   if (keyGateRequired()) {
-    snapshot = readOnlyLicenseState();
+    snapshot = await readOnlyLicenseStateAsync();
     if (!snapshot.allowed) showLimitReached(snapshot.message);
     return snapshot;
   }
