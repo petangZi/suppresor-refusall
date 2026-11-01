@@ -451,7 +451,6 @@ export const SuppresorRefusallPlugin = async ({ client, directory } = {}) => {
       if (!event) return;
 
       if (event.type === 'session.created') {
-        stopIdleUI();
         handleSessionCreated();
         if (isActive()) setTheme(THEME_ACTIVE);
         pendingSessionCheck = spendUse().catch(e => { if (process.env.SUPPRESOR_DEBUG === '1') console.error(`license check failed: ${e.message}`); });
@@ -461,6 +460,9 @@ export const SuppresorRefusallPlugin = async ({ client, directory } = {}) => {
       // Track latest assistant text per session so we can score on idle.
       if (event.type === 'message.part.updated') {
         const part = event.properties?.part;
+        if (part && !part.synthetic && (part.type === 'text' || part.type === 'reasoning' || part.type === 'thinking')) {
+          stopIdleUI();
+        }
         if (part && part.type === 'text' && typeof part.text === 'string' && !part.synthetic) {
           // part.text grows during streaming; last update holds the full text
           recoveryState.sessionLastMsg.set(part.sessionID, { messageID: part.messageID, text: part.text });
@@ -479,6 +481,7 @@ export const SuppresorRefusallPlugin = async ({ client, directory } = {}) => {
       }
 
       if (event.type === 'session.idle' && isActive() && allowedNow() && client) {
+        stopIdleUI();
         if (!keyGateRequired()) gateHeartbeat().catch(() => null);
         const sessionID = event.properties?.sessionID;
         if (!sessionID) return;
@@ -513,6 +516,7 @@ export const SuppresorRefusallPlugin = async ({ client, directory } = {}) => {
 
     'chat.message': async (_input, output) => {
       if (!output || !output.parts) return;
+      stopIdleUI();
       const role = output.message?.role || output.info?.role;
       if (!role || role === 'user') {
         const sessionID = _input?.sessionID || output.message?.sessionID || output.sessionID;
@@ -660,6 +664,7 @@ export const SuppresorRefusallPlugin = async ({ client, directory } = {}) => {
     },
 
     'experimental.text.complete': async (input, output) => {
+      stopIdleUI();
       if (!isActive() || !allowedNow()) return;
       if (!output || typeof output.text !== 'string' || output.text.includes(RECOVERY_MARKER)) return;
       const cfg = projectConfig();

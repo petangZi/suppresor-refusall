@@ -2,7 +2,7 @@
 
 > **Obliteratoratus-grade refusal suppression for opencode.** Pure technical, no persona, no roleplay. Multi-layer architecture, MCP management server, custom blood-red theme, optional genGenius mode. Default ON.
 
-![Version](https://img.shields.io/badge/version-2.10.0-blue)
+![Version](https://img.shields.io/badge/version-2.11.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-opencode-orange)
 
@@ -103,6 +103,29 @@ from the last completed step with an equivalent method in the same domain; the
 prompt explicitly forbids switching to a lab, tutorial, or unrelated 90-degree
 alternative.
 
+## Agent Stacks
+
+Separate instruction sets for other frameworks:
+
+| Framework | File |
+|---|---|
+| Hermes | `stacks/hermes/SOUL.md` |
+| Codex | `stacks/codex/AGENTS.md` |
+| Claude | `stacks/claude/CLAUDE.md` |
+| OpenCode | `stacks/opencode/AGENTS.md` |
+
+Install one into a project root:
+
+```bash
+./stacks/install-stack.sh codex /path/to/project
+./stacks/install-stack.sh claude /path/to/project
+```
+
+Windows: `powershell -File .\stacks\install-stack.ps1 -Stack claude -Target C:\project`.
+
+The stacks share the same build-first loop, complete-artifact standard, and
+same-domain refusal recovery. The wording is tuned per framework.
+
 ## Desktop
 
 Windows desktop uses the PowerShell installer:
@@ -119,6 +142,11 @@ curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/in
 ```
 
 Full instructions: [DESKTOP.md](DESKTOP.md).
+
+The startup idle UI no longer stops on `session.created`. It stops on the first
+real message or assistant part, with a 30s safety TTL. Disable it with
+`SUPPRESOR_IDLE_UI=0`; tune with `SUPPRESOR_IDLE_TTL_MS` and
+`SUPPRESOR_IDLE_FRAME_MS`.
 
 ## Configuration
 

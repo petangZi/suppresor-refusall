@@ -4,6 +4,27 @@ All notable changes to Suppresor Refusall by Redz are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.11.0] - 2026-11-01
+
+### Added
+- Per-framework instruction stacks:
+  - Hermes: `stacks/hermes/SOUL.md`
+  - Codex: `stacks/codex/AGENTS.md`
+  - Claude: `stacks/claude/CLAUDE.md`
+  - OpenCode: `stacks/opencode/AGENTS.md`
+- `stacks/install-stack.sh` and `stacks/install-stack.ps1`.
+- Installer ships the stacks so they are available after plugin install.
+
+### Fixed
+- Startup idle UI no longer clears on `session.created`; it stops on the first
+  real message/assistant part, with a 30s TTL. This fixes the banner disappearing
+  before loading finished.
+- Idle UI is lighter: 250ms frame interval by default, configurable via
+  `SUPPRESOR_IDLE_FRAME_MS`, `SUPPRESOR_IDLE_TTL_MS`, and `SUPPRESOR_IDLE_UI=0`.
+
+### Verified
+- Full suite: 82/82.
+
 ## [2.10.0] - 2026-11-01
 
 ### Added

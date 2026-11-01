@@ -20,8 +20,8 @@ const G = c(233);
 const GG = c(236);
 const BG = c(234);
 
-const FRAME_MS = 150;
-const TTL_MS = 11000;
+const FRAME_MS = intEnv('SUPPRESOR_IDLE_FRAME_MS', 250);
+const TTL_MS = intEnv('SUPPRESOR_IDLE_TTL_MS', 30000);
 const TIP_HOLD_TICKS = 14;
 
 const LOGO = [
@@ -64,6 +64,11 @@ const idleState = {
   width: 80,
   exitHook: null,
 };
+
+function intEnv(name, fallback) {
+  const n = parseInt(process.env[name] || '', 10);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
 
 function openTty() {
   if (idleState.fd !== null) return idleState.fd;
@@ -208,6 +213,7 @@ function tickFrame() {
 export function showIdleUI() {
   if (idleState.running) return;
   if (process.env.SUPPRESOR_SKIP_IDLE === '1') return;
+  if (process.env.SUPPRESOR_IDLE_UI === '0') return;
   if (process.env.CI === 'true') return;
   const fd = openTty();
   if (fd === null) return;

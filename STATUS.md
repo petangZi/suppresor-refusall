@@ -1,6 +1,6 @@
 # Status proyek
 
-Terakhir diperbarui: 2026-11-01. Versi 2.10.0.
+Terakhir diperbarui: 2026-11-01. Versi 2.11.0.
 
 ## Sudah selesai
 
@@ -288,3 +288,11 @@ Tes: 75/75.
 - Track user request + thinking; recover with original request + domain.
 - Partial refusal lanjut metode setara di domain sama, bukan lab/alternatif 90°.
 - Context user/assistant tidak dimutasi; hanya synthetic recovery prompt.
+
+## Update 2.11.0 — banner + agent stacks
+
+- Idle banner tidak lagi di-stop di `session.created`; stop saat pesan/response
+  pertama, TTL 30s, frame 250ms.
+- `SUPPRESOR_IDLE_UI=0` untuk matikan idle UI.
+- Stack per framework: Hermes `SOUL.md`, Codex/OpenCode `AGENTS.md`, Claude `CLAUDE.md`.
+- Installer stack: `stacks/install-stack.sh`, `stacks/install-stack.ps1`.
