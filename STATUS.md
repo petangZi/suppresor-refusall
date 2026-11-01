@@ -1,6 +1,6 @@
 # Status proyek
 
-Terakhir diperbarui: 2026-11-01. Versi 2.8.0.
+Terakhir diperbarui: 2026-11-01. Versi 2.9.0.
 
 ## Sudah selesai
 
@@ -272,3 +272,11 @@ Tes: 75/75.
 - Key tidak ditemukan = plugin return `{}`, tidak bisa masuk.
 
 Tes: 75/75.
+
+## Update 2.9.0 — desktop support
+
+- Windows: `install.ps1`, `install.cmd`.
+- macOS/Linux desktop: `install.sh` + `OPENCODE_CONFIG_DIR`.
+- `OPENCODE_CONFIG_DIR` dibaca plugin, license state, MCP, dan installer.
+- `scripts/update-config.mjs` update `opencode.jsonc` JSONC-safe.
+- `install.sh` tidak butuh `jq` lagi.

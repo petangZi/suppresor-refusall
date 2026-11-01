@@ -22,6 +22,7 @@ import { showIdleUI, stopIdleUI } from './tiki-idle.mjs';
 const here = dirname(fileURLToPath(import.meta.url));
 
 function opencodeConfigDir() {
+  if (process.env.OPENCODE_CONFIG_DIR) return process.env.OPENCODE_CONFIG_DIR;
   if (process.env.XDG_CONFIG_HOME) {
     return path.join(process.env.XDG_CONFIG_HOME, 'opencode');
   }

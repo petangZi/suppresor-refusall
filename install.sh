@@ -16,13 +16,14 @@ NC='\033[0m'
 # Config
 REPO="petangZi/suppresor-refusall"
 BRANCH="main"
-PLUGIN_DIR="$HOME/.config/opencode/plugins/suppresor-refusall"
-COMMANDS_DIR="$HOME/.config/opencode/commands"
-SKILLS_DIR="$HOME/.config/opencode/skills/suppresor-refusall"
-THEMES_DIR="$HOME/.config/opencode/themes"
-CONFIG_FILE="$HOME/.config/opencode/opencode.jsonc"
-KEY_FILE="$HOME/.config/opencode/.suppresor-key"
-KEY_REQUIRED_FILE="$HOME/.config/opencode/.suppresor-key-required"
+CONFIG_ROOT="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}"
+PLUGIN_DIR="$CONFIG_ROOT/plugins/suppresor-refusall"
+COMMANDS_DIR="$CONFIG_ROOT/commands"
+SKILLS_DIR="$CONFIG_ROOT/skills/suppresor-refusall"
+THEMES_DIR="$CONFIG_ROOT/themes"
+CONFIG_FILE="$CONFIG_ROOT/opencode.jsonc"
+KEY_FILE="$CONFIG_ROOT/.suppresor-key"
+KEY_REQUIRED_FILE="$CONFIG_ROOT/.suppresor-key-required"
 LICENSE_KEY="${SUPPRESOR_LICENSE_KEY:-}"
 
 # Files to install
@@ -31,6 +32,7 @@ FILES=(
   "mcp-server.mjs"
   "refusal-patterns.mjs"
   "project-config.mjs"
+  "scripts/update-config.mjs"
   "tiki-agent.mjs"
   "tiki-idle.mjs"
   "agent-tiki.md"
@@ -96,7 +98,7 @@ error() {
 
 check_deps() {
   log "Checking dependencies..."
-  for cmd in curl jq node; do
+  for cmd in curl node; do
     if ! command -v "$cmd" &> /dev/null; then
       error "$cmd is required but not installed"
     fi
@@ -181,6 +183,7 @@ download_files() {
       elif [[ "$file" == "SKILL.md" ]]; then
         dest="$SKILLS_DIR/$file"
       fi
+      mkdir -p "$(dirname "$dest")"
       if [[ -f "$src" ]]; then
         cp "$src" "$dest"
         success "Installed $file"
@@ -198,6 +201,7 @@ download_files() {
       elif [[ "$file" == "SKILL.md" ]]; then
         dest="$SKILLS_DIR/$file"
       fi
+      mkdir -p "$(dirname "$dest")"
       if curl -fsSL "$url" -o "$dest"; then
         success "Downloaded $file"
       else
@@ -210,42 +214,13 @@ download_files() {
 
 update_config() {
   log "Updating opencode config..."
-  
-  if [[ ! -f "$CONFIG_FILE" ]]; then
-    warn "Config file not found, creating minimal config"
-    echo '{"$schema":"https://opencode.ai/config.json","plugin":[]}' > "$CONFIG_FILE"
-  fi
-
-  if grep -q "suppresor-refusall/plugin.js" "$CONFIG_FILE"; then
-    warn "Plugin already registered in config"
-  else
-    local plugin_path="./plugins/suppresor-refusall/plugin.js"
-    jq --arg plugin "$plugin_path" '
-      .plugin += [$plugin] | .plugin |= unique
-    ' "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
-    success "Plugin registered in opencode.jsonc"
-  fi
-
-  if grep -q '"theme"' "$CONFIG_FILE"; then
-    log "Theme already set in config — keeping existing value"
-  else
-    jq '.theme = "suppresor-red"' "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
-    success "Theme set to suppresor-red"
-  fi
-
-  if grep -q "mcp-server.mjs" "$CONFIG_FILE"; then
-    warn "MCP server already registered in config"
-  else
-    jq --arg cmd "node $PLUGIN_DIR/mcp-server.mjs" '
-      .mcp["suppresor-refusall"] = {
-        "type": "local",
-        "command": [$cmd | split(" ")[]],
-        "enabled": true,
-        "environment": {}
-      }
-    ' "$CONFIG_FILE" > "$CONFIG_FILE.tmp" && mv "$CONFIG_FILE.tmp" "$CONFIG_FILE"
-    success "MCP server registered in opencode.jsonc"
-  fi
+  mkdir -p "$(dirname "$CONFIG_FILE")"
+  node "$PLUGIN_DIR/scripts/update-config.mjs" \
+    --config "$CONFIG_FILE" \
+    --plugin "./plugins/suppresor-refusall/plugin.js" \
+    --mcp "$PLUGIN_DIR/mcp-server.mjs" \
+    --theme "suppresor-red"
+  success "Plugin, theme, and MCP registered in opencode.jsonc"
 }
 
 verify() {
@@ -281,6 +256,14 @@ verify() {
 
   if ! node --check "$PLUGIN_DIR/project-config.mjs" 2>/dev/null; then
     error "Project config loader syntax check failed"
+  fi
+
+  if [[ ! -f "$PLUGIN_DIR/scripts/update-config.mjs" ]]; then
+    error "Config updater missing"
+  fi
+
+  if ! node --check "$PLUGIN_DIR/scripts/update-config.mjs" 2>/dev/null; then
+    error "Config updater syntax check failed"
   fi
 
   if [[ ! -f "$PLUGIN_DIR/firestore-access.json" ]]; then

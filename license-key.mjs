@@ -16,6 +16,7 @@ function stateDir() {
   if (process.env.SUPPRESOR_TESTING === '1' && process.env.SUPPRESOR_STATE_DIR) {
     return process.env.SUPPRESOR_STATE_DIR;
   }
+  if (process.env.OPENCODE_CONFIG_DIR) return process.env.OPENCODE_CONFIG_DIR;
   return join(homedir(), '.config', 'opencode');
 }
 

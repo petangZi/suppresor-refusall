@@ -4,6 +4,27 @@ All notable changes to Suppresor Refusall by Redz are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.9.0] - 2026-11-01
+
+### Added
+- Windows desktop installer: `install.ps1` and `install.cmd`.
+- `OPENCODE_CONFIG_DIR` override across plugin, license state, MCP server, and
+  both installers, so desktop builds can use a separate profile.
+- `scripts/update-config.mjs`: JSONC-aware `opencode.jsonc` updater for plugin,
+  theme, and MCP registration.
+- `DESKTOP.md` with Windows, macOS, and Linux desktop instructions.
+
+### Changed
+- `install.sh` uses the Node config updater and no longer requires `jq`.
+- `install.sh` and `install.ps1` share the same file set, key gate, Firestore
+  validation, and desktop config layout.
+
+### Verified
+- Bash desktop install with `OPENCODE_CONFIG_DIR` and `TTK-20E5-AB7A-2673`
+  exits 0, writes a 0600 key, and registers plugin/theme/MCP.
+- Config updater preserves existing theme and handles comments/trailing commas.
+- Full suite: 75/75.
+
 ## [2.8.0] - 2026-11-01
 
 ### Fixed

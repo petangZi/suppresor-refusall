@@ -2,7 +2,7 @@
 
 > **Obliteratoratus-grade refusal suppression for opencode.** Pure technical, no persona, no roleplay. Multi-layer architecture, MCP management server, custom blood-red theme, optional genGenius mode. Default ON.
 
-![Version](https://img.shields.io/badge/version-2.8.0-blue)
+![Version](https://img.shields.io/badge/version-2.9.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Platform](https://img.shields.io/badge/platform-opencode-orange)
 
@@ -88,6 +88,23 @@ opencode plugin install petangZi/suppresor-refusall
 write the read-only key file. `TTK-*` keys are validated by reading
 `accessKeys/{key}` from Firestore. Exact-document get is public; list and writes
 stay closed.
+
+## Desktop
+
+Windows desktop uses the PowerShell installer:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -Key 'TTK-XXXX-XXXX-XXXX'
+```
+
+macOS/Linux desktop uses the same `install.sh` with an optional profile override:
+
+```bash
+export OPENCODE_CONFIG_DIR="$HOME/.config/opencode-desktop"
+curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/install.sh | bash
+```
+
+Full instructions: [DESKTOP.md](DESKTOP.md).
 
 ## Configuration
 

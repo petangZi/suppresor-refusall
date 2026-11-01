@@ -11,9 +11,11 @@ import path from 'node:path';
 import { loadProjectConfig } from './project-config.mjs';
 import { keyGateRequired, readOnlyLicenseState } from './license-key.mjs';
 
-const cfgDir = process.env.XDG_CONFIG_HOME
-  ? path.join(process.env.XDG_CONFIG_HOME, 'opencode')
-  : path.join(os.homedir(), '.config', 'opencode');
+const cfgDir = process.env.OPENCODE_CONFIG_DIR
+  ? process.env.OPENCODE_CONFIG_DIR
+  : process.env.XDG_CONFIG_HOME
+    ? path.join(process.env.XDG_CONFIG_HOME, 'opencode')
+    : path.join(os.homedir(), '.config', 'opencode');
 try { mkdirSync(cfgDir, { recursive: true }); } catch {}
 
 const flagPath = path.join(cfgDir, '.suppresor-refusall-active');
