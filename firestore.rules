@@ -105,7 +105,9 @@ service cloud.firestore {
     // - Client-side create, update, delete strictly forbidden (Server/Bridge only)
     // =========================================================================
     match /accessKeys/{keyId} {
-      allow get: if request.auth != null;
+      // Exact-document read only. The key id is the credential; list/query and
+      // every write stay closed, so this does not reopen enumeration.
+      allow get: if true;
       allow list: if false;
       allow create, update, delete: if false;
     }

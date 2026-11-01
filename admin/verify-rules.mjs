@@ -46,8 +46,8 @@ record('create accessKeys denied', 403, (await status(`${base}/accessKeys?docume
   body: JSON.stringify({ fields: { id: { stringValue: 'TTK-0000-0000-0000' } } }),
 })).code);
 
-// 4. Unauthenticated get is denied once rules require auth.
-record('get accessKeys needs auth', [401, 403], (await status(`${base}/accessKeys/${encodeURIComponent(testKey)}`)).code);
+// 4. Exact-document get is public; the key id is the credential.
+record('get accessKeys public exact-doc', 200, (await status(`${base}/accessKeys/${encodeURIComponent(testKey)}`)).code);
 
 // 5-6. Anonymous ledger create and increment.
 const signup = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${cfg.apiKey}`, {

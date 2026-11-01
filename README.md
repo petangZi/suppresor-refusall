@@ -86,7 +86,8 @@ opencode plugin install petangZi/suppresor-refusall
 `install.sh` requires a license key. Set `SUPPRESOR_LICENSE_KEY`, or pipe with
 `bash -s -- --key 'TTK-XXXX-XXXX-XXXX'`. A bare `opencode plugin install` does not
 write the read-only key file. `TTK-*` keys are validated by reading
-`accessKeys/{key}` from Firestore.
+`accessKeys/{key}` from Firestore. Exact-document get is public; list and writes
+stay closed.
 
 ## Configuration
 
