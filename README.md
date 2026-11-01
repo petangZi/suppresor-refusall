@@ -156,7 +156,10 @@ validates every entry. Invalid entries are skipped with a debug warning.
 ### Read-only license gate
 
 New installs require a key. `TTK-*` keys are checked against Firestore
-`accessKeys/{key}`; `SRK1` signed keys are also accepted offline. The installer
+`accessKeys/{key}`; `SRK1` signed keys are also accepted offline.
+Firestore target: project `crafty-joy-d6d0h`, database
+`ai-studio-tikitikifirehub-2c738d85-fa44-4fe8-9139-9a025f0ef977`,
+location `asia-southeast1`, edition `Enterprise`. The installer
 writes the key once to `~/.config/opencode/.suppresor-key` (mode `0600`) plus the
 `.suppresor-key-required` marker.
 

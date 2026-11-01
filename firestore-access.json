@@ -29,11 +29,14 @@
   },
   "metadata": {
     "databaseId": "ai-studio-tikitikifirehub-2c738d85-fa44-4fe8-9139-9a025f0ef977",
-    "region": "nam5 (multi-region, us-central)",
-    "type": "Firestore Named Database",
+    "region": "asia-southeast1",
+    "type": "Firestore Native (Enterprise)",
     "status": "active",
     "exportedAt": "2026-10-24T00:00:00Z",
     "product": "suppresor-refusall-by-redz",
-    "version": "2.2.0"
+    "version": "2.8.0",
+    "locationId": "asia-southeast1",
+    "databaseEdition": "ENTERPRISE",
+    "firestoreDataAccessMode": "DATA_ACCESS_MODE_ENABLED"
   }
 }

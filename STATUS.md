@@ -266,6 +266,7 @@ Tes: 75/75.
 - Tidak ada device registration, usage increment, `.suppresor-license`, atau
   `.suppresor-device` saat verifikasi TTK.
 - `SRK1` tetap opsional untuk key admin offline.
+- Database live: `asia-southeast1`, `FIRESTORE_NATIVE`, `ENTERPRISE`.
 - `firestore.rules`: `accessKeys` exact-doc get publik, list/query/write tertutup.
   Rules sudah di-deploy ke named database; `verify-rules` 9/9.
 - Key tidak ditemukan = plugin return `{}`, tidak bisa masuk.

@@ -17,6 +17,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   usage. Key verification disables the auth token disk cache.
 - Not-found keys now report `key tidak ditemukan di Firestore accessKeys` instead
   of a generic Firestore read failure.
+- Metadata corrected: `locationId: asia-southeast1`, `databaseEdition: ENTERPRISE`
+  for the named database.
 - `firestore.rules`: `accessKeys` exact-document `get` is public again; list,
   runQuery, create, update, and delete stay closed. Deployed to the named database.
   `admin/verify-rules.mjs` now checks public exact-doc get and passes 9/9.

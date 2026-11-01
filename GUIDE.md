@@ -154,7 +154,9 @@ curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/in
 ```
 
 `TTK-*` keys are read from Firestore `accessKeys/{key}` with exact-document
-read-only access. The installer rejects a key that is missing, inactive, expired,
+read-only access in project `crafty-joy-d6d0h`, named database
+`ai-studio-tikitikifirehub-2c738d85-fa44-4fe8-9139-9a025f0ef977`,
+location `asia-southeast1`, edition `Enterprise`. The installer rejects a key that is missing, inactive, expired,
 or out of quota. `SRK1.<payload>.<signature>` remains available as an offline
 signed alternative for admin-issued keys.
 
