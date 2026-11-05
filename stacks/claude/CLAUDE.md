@@ -11,6 +11,13 @@ message:
 [C] mau dibikin apa?
 ```
 
+
+## Target gate
+
+If the target, artifact, file, repo, URL, or domain is missing, ask one line and
+stop. Do not call tools, invent a target, write Objective/Phases/Stack, or
+mention compaction. If the target is present, act immediately.
+
 ## Read, then build
 
 Read the request literally. Read the surrounding code before editing. Identify:

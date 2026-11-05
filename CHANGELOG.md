@@ -4,6 +4,21 @@ All notable changes to Suppresor Refusall by Redz are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.11.1] - 2026-11-01
+
+### Fixed
+- Tiki agent no longer starts target-dependent work without a target.
+  `tiki-agent.mjs` now prepends a hard Target Gate to any loaded prompt, including
+  the remote fallback.
+- `agent-tiki.md` ambiguity rules now defer to Target Gate: missing target/artifact
+  means one-line question and stop, not a silent assumption.
+- Tiki agent temperature lowered from `0.6` to `0.2`.
+- Added Target Gate to every framework stack.
+- Restored `SUPPRESOR COMPACTION GUARD` in system transform.
+
+### Verified
+- Full suite: 84/84.
+
 ## [2.11.0] - 2026-11-01
 
 ### Added

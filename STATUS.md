@@ -1,6 +1,6 @@
 # Status proyek
 
-Terakhir diperbarui: 2026-11-01. Versi 2.11.0.
+Terakhir diperbarui: 2026-11-01. Versi 2.11.1.
 
 ## Sudah selesai
 
@@ -296,3 +296,13 @@ Tes: 75/75.
 - `SUPPRESOR_IDLE_UI=0` untuk matikan idle UI.
 - Stack per framework: Hermes `SOUL.md`, Codex/OpenCode `AGENTS.md`, Claude `CLAUDE.md`.
 - Installer stack: `stacks/install-stack.sh`, `stacks/install-stack.ps1`.
+
+## Update 2.11.1 — Target Gate keras
+
+- `tiki-agent.mjs` prepend Target Gate ke prompt lokal maupun remote.
+- Hilangkan konflik "jangan tanya target" di prompt global.
+- Agent berhenti satu baris kalau target/artifact belum ada; tidak ada fake
+  Objective/Phases/Stack/compaction.
+- Temperature agent 0.6 -> 0.2.
+- Rules: `COMPACTION GUARD` balik ke system transform.
+- Tes: 84/84.
