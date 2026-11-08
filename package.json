@@ -1,6 +1,6 @@
 {
   "name": "suppresor-refusall-by-redz",
-  "version": "2.11.2",
+  "version": "2.11.3",
   "description": "Suppresor Refusall by Redz — pure technical refusal suppression. Default ON, MCP server, project-level config with custom patterns, oc-themes, Firestore license gate, and an optional server-side entitlement/transform gateway with offline fallback.",
   "type": "module",
   "main": "plugin.js",

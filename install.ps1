@@ -111,12 +111,20 @@ try {
   & icacls $KeyFile /inheritance:r /grant:r "$($env:USERNAME):R" | Out-Null
 } catch { }
 
-& node (Join-Path $PluginDir 'scripts\update-config.mjs') `
-  --config $ConfigFile `
-  --plugin './plugins/suppresor-refusall/plugin.js' `
-  --mcp (Join-Path $PluginDir 'mcp-server.mjs') `
-  --theme 'suppresor-red'
-if ($LASTEXITCODE -ne 0) { throw 'Failed to update opencode.jsonc.' }
+$configs = @()
+$jsonConfig = Join-Path $ConfigDir 'opencode.json'
+$jsoncConfig = Join-Path $ConfigDir 'opencode.jsonc'
+if (Test-Path $jsonConfig) { $configs += $jsonConfig }
+if (Test-Path $jsoncConfig) { $configs += $jsoncConfig }
+if ($configs.Count -eq 0) { $configs += $jsoncConfig }
+foreach ($cfg in $configs) {
+  & node (Join-Path $PluginDir 'scripts\update-config.mjs') `
+    --config $cfg `
+    --plugin (Join-Path $PluginDir 'plugin.js') `
+    --mcp (Join-Path $PluginDir 'mcp-server.mjs') `
+    --theme 'suppresor-red'
+  if ($LASTEXITCODE -ne 0) { throw "Failed to update $cfg." }
+}
 
 & node --check (Join-Path $PluginDir 'plugin.js')
 if ($LASTEXITCODE -ne 0) { throw 'Plugin syntax check failed.' }

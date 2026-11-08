@@ -16,6 +16,7 @@ NC='\033[0m'
 # Config
 REPO="petangZi/suppresor-refusall"
 BRANCH="main"
+BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_ROOT="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}"
 PLUGIN_DIR="$CONFIG_ROOT/plugins/suppresor-refusall"
 COMMANDS_DIR="$CONFIG_ROOT/commands"
@@ -185,7 +186,7 @@ download_files() {
   if [[ "$LOCAL_MODE" == "true" ]]; then
     log "Installing from local package..."
     for file in "${FILES[@]}"; do
-      local src="$PWD/$file"
+      local src="$BASE_DIR/$file"
       local dest="$PLUGIN_DIR/$file"
       if [[ "$file" == "suppresor-refusall.md" ]]; then
         dest="$COMMANDS_DIR/$file"
@@ -218,18 +219,27 @@ download_files() {
       fi
     done
   fi
-  install_subdir_files "$([[ "$LOCAL_MODE" == "true" ]] && echo "$PWD" || echo "")"
+  install_subdir_files "$([[ "$LOCAL_MODE" == "true" ]] && echo "$BASE_DIR" || echo "")"
 }
 
 update_config() {
   log "Updating opencode config..."
-  mkdir -p "$(dirname "$CONFIG_FILE")"
-  node "$PLUGIN_DIR/scripts/update-config.mjs" \
-    --config "$CONFIG_FILE" \
-    --plugin "./plugins/suppresor-refusall/plugin.js" \
-    --mcp "$PLUGIN_DIR/mcp-server.mjs" \
-    --theme "suppresor-red"
-  success "Plugin, theme, and MCP registered in opencode.jsonc"
+  mkdir -p "$CONFIG_ROOT"
+  local targets=()
+  [[ -f "$CONFIG_ROOT/opencode.json" ]] && targets+=("$CONFIG_ROOT/opencode.json")
+  [[ -f "$CONFIG_ROOT/opencode.jsonc" ]] && targets+=("$CONFIG_ROOT/opencode.jsonc")
+  if [[ ${#targets[@]} -eq 0 ]]; then
+    targets+=("$CONFIG_ROOT/opencode.jsonc")
+  fi
+  local f
+  for f in "${targets[@]}"; do
+    node "$PLUGIN_DIR/scripts/update-config.mjs" \
+      --config "$f" \
+      --plugin "$PLUGIN_DIR/plugin.js" \
+      --mcp "$PLUGIN_DIR/mcp-server.mjs" \
+      --theme "suppresor-red"
+  done
+  success "Plugin, theme, and MCP registered in opencode config"
 }
 
 verify() {
@@ -243,8 +253,8 @@ verify() {
     error "Plugin syntax check failed"
   fi
   
-  if ! grep -q "suppresor-refusall/plugin.js" "$CONFIG_FILE"; then
-    error "Plugin not found in config"
+  if ! grep -q "suppresor-refusall/plugin.js" "$CONFIG_ROOT/opencode.json" "$CONFIG_ROOT/opencode.jsonc" 2>/dev/null; then
+    error "Plugin not found in opencode config"
   fi
   
   if [[ ! -f "$COMMANDS_DIR/suppresor-refusall.md" ]]; then

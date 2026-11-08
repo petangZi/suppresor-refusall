@@ -3,7 +3,7 @@
 Refusal suppression, Intent Recovery, and build-first agent stacks for opencode.
 Default ON.
 
-![Version](https://img.shields.io/badge/version-2.11.2-blue)
+![Version](https://img.shields.io/badge/version-2.11.3-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Install

@@ -1,6 +1,6 @@
 # Status proyek
 
-Terakhir diperbarui: 2026-11-08. Versi 2.11.2.
+Terakhir diperbarui: 2026-11-08. Versi 2.11.3.
 
 ## Sudah selesai
 
@@ -313,4 +313,12 @@ Tes: 75/75.
 - Schema baru `plan` + `used` + `createdAt` dihitung expiry-nya.
 - Schema lama `status`/`expiresAt` tetap jalan.
 - `TTK-20E5-AB7A-2673` tidak ada di `accessKeys`; key aktif saat ini `TIKI-*`.
+- Tes: 87/87.
+
+## Update 2.11.3 — installer path/config
+
+- `--local` pakai `BASE_DIR`, bukan `$PWD`.
+- Update `opencode.json` dan `opencode.jsonc` kalau ada.
+- Plugin path absolut di config.
+- `verify` cek kedua nama config.
 - Tes: 87/87.

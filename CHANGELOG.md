@@ -4,6 +4,23 @@ All notable changes to Suppresor Refusall by Redz are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.11.3] - 2026-11-08
+
+### Fixed
+- `install.sh --local` now resolves files from the script directory, not the
+  caller's `$PWD`. Running the installer from another directory no longer skips
+  every source file.
+- Installer updates both `opencode.json` and `opencode.jsonc` when either exists,
+  and creates `opencode.jsonc` only when neither exists.
+- Plugin path in generated config is absolute, so desktop/other working
+  directories can load it reliably.
+- `verify` now checks both config filenames.
+
+### Verified
+- Install from outside the repo with `--local` exits 0.
+- `opencode.json`-only profile gets plugin/theme/MCP and an absolute plugin path.
+- Full suite: 87/87.
+
 ## [2.11.2] - 2026-11-08
 
 ### Fixed
