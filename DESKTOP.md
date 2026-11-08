@@ -8,7 +8,7 @@ separate profile.
 ## Windows PowerShell
 
 ```powershell
-$env:SUPPRESOR_LICENSE_KEY = 'TTK-XXXX-XXXX-XXXX'
+$env:SUPPRESOR_LICENSE_KEY = 'TIKI-XXXX-XXXX-XXXX'
 Invoke-WebRequest -UseBasicParsing `
   -Uri https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/install.ps1 `
   -OutFile install.ps1
@@ -18,26 +18,26 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1
 Or pass the key directly:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -Key 'TTK-XXXX-XXXX-XXXX'
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -Key 'TIKI-XXXX-XXXX-XXXX'
 ```
 
 Custom desktop profile:
 
 ```powershell
 $env:OPENCODE_CONFIG_DIR = "$env:APPDATA\opencode"
-powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -Key 'TTK-XXXX-XXXX-XXXX'
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -Key 'TIKI-XXXX-XXXX-XXXX'
 ```
 
 `install.cmd` is a wrapper for double-click or `cmd.exe`:
 
 ```bat
-install.cmd -Key TTK-XXXX-XXXX-XXXX
+install.cmd -Key TIKI-XXXX-XXXX-XXXX
 ```
 
 ## macOS / Linux desktop
 
 ```bash
-export SUPPRESOR_LICENSE_KEY='TTK-XXXX-XXXX-XXXX'
+export SUPPRESOR_LICENSE_KEY='TIKI-XXXX-XXXX-XXXX'
 export OPENCODE_CONFIG_DIR="$HOME/.config/opencode-desktop"   # optional
 curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/install.sh | bash
 ```
@@ -56,7 +56,7 @@ The installer writes:
 
 ## License validation
 
-`TTK-*` keys are read from Firestore:
+`TIKI-*` keys are read from Firestore (`TTK-*` and `TKI-*` also accepted):
 
 ```text
 Project : crafty-joy-d6d0h

@@ -3,7 +3,7 @@
 Refusal suppression, Intent Recovery, and build-first agent stacks for opencode.
 Default ON.
 
-![Version](https://img.shields.io/badge/version-2.11.1-blue)
+![Version](https://img.shields.io/badge/version-2.11.2-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Install
@@ -11,14 +11,14 @@ Default ON.
 Linux / macOS:
 
 ```bash
-export SUPPRESOR_LICENSE_KEY='TTK-XXXX-XXXX-XXXX'
+export SUPPRESOR_LICENSE_KEY='TIKI-XXXX-XXXX-XXXX'
 curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/install.sh | bash
 ```
 
 Windows:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -Key 'TTK-XXXX-XXXX-XXXX'
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -Key 'TIKI-XXXX-XXXX-XXXX'
 ```
 
 Restart opencode, lalu cek:
@@ -28,8 +28,8 @@ Restart opencode, lalu cek:
 ```
 
 Default config: `~/.config/opencode`. Override with `OPENCODE_CONFIG_DIR`.
-Installer menulis `.suppresor-key`; key `TTK-*` dibaca dari Firestore
-`accessKeys/{key}`.
+Installer menulis `.suppresor-key`; key `TIKI-*` dibaca dari Firestore `accessKeys/{key}`. `TTK-*` dan `TKI-*`
+juga diterima.
 
 ## Fitur
 

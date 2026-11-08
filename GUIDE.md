@@ -137,7 +137,7 @@ genGenius mati               # Genius OFF
 
 | Plan | How |
 |------|-----|
-| Pro | `TTK-*` Firestore key, stored once by the installer, verified read-only |
+| Pro | `TIKI-*` Firestore key, stored once by the installer, verified read-only |
 
 The plugin does not run a free counter in read-only mode. No key means no entry:
 the plugin returns an empty hook set, so the `tiki` agent is not registered and
@@ -146,14 +146,14 @@ no enforcement layer runs.
 ### Install-time key
 
 ```bash
-SUPPRESOR_LICENSE_KEY='TTK-XXXX-XXXX-XXXX' bash install.sh --local
+SUPPRESOR_LICENSE_KEY='TIKI-XXXX-XXXX-XXXX' bash install.sh --local
 # or
-bash install.sh --local --key 'TTK-XXXX-XXXX-XXXX'
+bash install.sh --local --key 'TIKI-XXXX-XXXX-XXXX'
 # remote
-curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/install.sh | bash -s -- --key 'TTK-XXXX-XXXX-XXXX'
+curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/install.sh | bash -s -- --key 'TIKI-XXXX-XXXX-XXXX'
 ```
 
-`TTK-*` keys are read from Firestore `accessKeys/{key}` with exact-document
+`TIKI-*` keys are read from Firestore `accessKeys/{key}` with exact-document
 read-only access in project `crafty-joy-d6d0h`, named database
 `ai-studio-tikitikifirehub-2c738d85-fa44-4fe8-9139-9a025f0ef977`,
 location `asia-southeast1`, edition `Enterprise`. The installer rejects a key that is missing, inactive, expired,
@@ -226,7 +226,7 @@ queries stay denied, which is what stops enumeration. Deploying needs the projec
 permission `serviceusage.services.use`; the current CLI login lacks it, so this must be
 run by an account with Owner or Firebase Admin on the project.
 
-Because the key documents were enumerable, treat every existing `TTK-*` key as leaked:
+Because the key documents were enumerable, treat every existing `TIKI-*` key as leaked:
 rotate them, and drop the redundant raw `key` field so only `keyHash` remains. Keys
 already issued to supporters should be re-minted.
 

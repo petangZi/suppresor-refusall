@@ -1,6 +1,6 @@
 # Status proyek
 
-Terakhir diperbarui: 2026-11-01. Versi 2.11.1.
+Terakhir diperbarui: 2026-11-08. Versi 2.11.2.
 
 ## Sudah selesai
 
@@ -306,3 +306,11 @@ Tes: 75/75.
 - Temperature agent 0.6 -> 0.2.
 - Rules: `COMPACTION GUARD` balik ke system transform.
 - Tes: 84/84.
+
+## Update 2.11.2 — Firestore key schema
+
+- Prefix `TIKI-*`, `TTK-*`, `TKI-*` diterima.
+- Schema baru `plan` + `used` + `createdAt` dihitung expiry-nya.
+- Schema lama `status`/`expiresAt` tetap jalan.
+- `TTK-20E5-AB7A-2673` tidak ada di `accessKeys`; key aktif saat ini `TIKI-*`.
+- Tes: 87/87.

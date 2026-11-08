@@ -79,7 +79,7 @@ $node = Get-Command node -ErrorAction SilentlyContinue
 if (-not $node) { throw 'Node.js is required. Install Node.js 18+ and retry.' }
 
 if (-not $Key) {
-  $Key = Read-Host 'License key (TTK-XXXX-XXXX-XXXX)'
+  $Key = Read-Host 'License key (TIKI-XXXX-XXXX-XXXX)'
 }
 if (-not $Key) { throw 'License key required. Set SUPPRESOR_LICENSE_KEY or pass -Key.' }
 

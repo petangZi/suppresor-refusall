@@ -4,6 +4,22 @@ All notable changes to Suppresor Refusall by Redz are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.11.2] - 2026-11-08
+
+### Fixed
+- Firestore key validation now accepts `TIKI-*`, `TTK-*`, and `TKI-*`.
+- New plan schema is supported: `plan` (`daily`/`weekly`/`monthly`/`yearly`),
+  `used`, and `createdAt`. Expiry is derived from plan duration.
+- Legacy status schema (`status`/`active`, `expiresAt`, `durationDays`,
+  `daysRemaining`, `maxUses`, `uses`) remains supported.
+- Added `tests/firestore-key.test.mjs`.
+
+### Verified
+- `TIKI-YEA-39YV-MH4J` -> valid.
+- `TIKI-DAI-*` -> valid while within 1 day.
+- `TTK-20E5-AB7A-2673` -> 404, document not present.
+- Full suite: 87/87.
+
 ## [2.11.1] - 2026-11-01
 
 ### Fixed

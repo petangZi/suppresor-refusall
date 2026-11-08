@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Suppresor Refusall by Redz — Automated Installer
-# Run: SUPPRESOR_LICENSE_KEY='TTK-XXXX-XXXX-XXXX' bash -c "$(curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/install.sh)"
-# Or:  curl -fsSL .../install.sh | bash -s -- --key 'TTK-XXXX-XXXX-XXXX'
-# Local: bash install.sh --local --key 'TTK-XXXX-XXXX-XXXX'
+# Run: SUPPRESOR_LICENSE_KEY='TIKI-XXXX-XXXX-XXXX' bash -c "$(curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/install.sh)"
+# Or:  curl -fsSL .../install.sh | bash -s -- --key 'TIKI-XXXX-XXXX-XXXX'
+# Local: bash install.sh --local --key 'TIKI-XXXX-XXXX-XXXX'
 
 set -euo pipefail
 
@@ -78,10 +78,10 @@ while [[ $# -gt 0 ]]; do
     --key) LICENSE_KEY="${2:-}"; shift 2 ;;
     --key=*) LICENSE_KEY="${1#--key=}"; shift ;;
     --help|-h)
-      echo "Usage: $0 [--local] [--key <TTK-XXXX-XXXX-XXXX>]"
+      echo "Usage: $0 [--local] [--key <TIKI-XXXX-XXXX-XXXX>]"
       echo "  --local  Install from current directory (extracted package)"
       echo "  --key    License key; required for install"
-      echo "  curl ... | bash -s -- --key TTK-XXXX-XXXX-XXXX"
+      echo "  curl ... | bash -s -- --key TIKI-XXXX-XXXX-XXXX"
       exit 0
       ;;
     *) shift ;;
@@ -120,7 +120,7 @@ collect_key() {
     return
   fi
   if [[ -t 0 ]]; then
-    read -rsp "License key (TTK-...): " LICENSE_KEY
+    read -rsp "License key (TIKI-...): " LICENSE_KEY
     echo ""
   fi
   if [[ -z "$LICENSE_KEY" ]]; then

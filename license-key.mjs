@@ -91,7 +91,7 @@ export function readLicenseKey() {
 }
 
 export function isTtkKey(keyStr) {
-  return /^TTK-[A-Za-z0-9-]{6,80}$/i.test(String(keyStr || '').trim());
+  return /^(?:TTK|TIKI|TKI)-[A-Za-z0-9-]{4,80}$/i.test(String(keyStr || '').trim());
 }
 
 function stateFromResult(key, result) {
@@ -135,9 +135,11 @@ function stateFromResult(key, result) {
   };
 }
 
+const PLAN_DAYS = { daily: 1, weekly: 7, monthly: 30, yearly: 365 };
+
 export async function verifyFirestoreKey(keyStr) {
   const key = String(keyStr || '').trim();
-  if (!isTtkKey(key)) return { ok: false, reason: 'format TTK tidak valid' };
+  if (!isTtkKey(key)) return { ok: false, reason: 'format key Firestore tidak valid' };
   process.env.SUPPRESOR_NO_TOKEN_CACHE = '1';
   let doc;
   try {
@@ -159,25 +161,35 @@ export async function verifyFirestoreKey(keyStr) {
   }
   if (!doc) return { ok: false, reason: `key tidak ditemukan di Firestore accessKeys: ${key}` };
 
+  return evaluateFirestoreKey(key, doc);
+}
+
+export function evaluateFirestoreKey(key, doc) {
+  if (!doc) return { ok: false, reason: `key tidak ditemukan di Firestore accessKeys: ${key}` };
+  if (doc.used === true) return { ok: false, reason: 'key sudah dipakai' };
   const status = String(doc.status || (doc.active === true ? 'ACTIVE' : '')).toUpperCase();
-  const active = doc.active === true || status === 'ACTIVE';
+  const hasLegacyStatus = doc.status !== undefined || doc.active !== undefined;
+  const active = hasLegacyStatus ? (doc.active === true || status === 'ACTIVE') : true;
   const unlimited = doc.durationDays === -1 || doc.daysRemaining === 99999 || doc.maxUses === -1;
-  const expiresAt = typeof doc.expiresAt === 'string' ? Date.parse(doc.expiresAt) : NaN;
+  const createdAt = Date.parse(doc.createdAt || '');
+  const plan = String(doc.plan || '').toLowerCase();
+  const planDays = PLAN_DAYS[plan] || 0;
+  const planExpiry = Number.isFinite(createdAt) && planDays > 0 ? createdAt + planDays * 86400000 : NaN;
+  const expiresAt = typeof doc.expiresAt === 'string' ? Date.parse(doc.expiresAt) : planExpiry;
   const expired = (Number.isFinite(expiresAt) && expiresAt < Date.now())
     || (!unlimited && typeof doc.daysRemaining === 'number' && doc.daysRemaining <= 0);
   const maxUses = typeof doc.maxUses === 'number' ? doc.maxUses : -1;
   const uses = typeof doc.uses === 'number' ? doc.uses : (typeof doc.usesCount === 'number' ? doc.usesCount : 0);
-
   if (!active) return { ok: false, reason: `key tidak aktif (${status || 'unknown'})` };
-  if (expired) return { ok: false, reason: 'key expired' };
+  if (expired) return { ok: false, reason: plan ? `key expired (${plan})` : 'key expired' };
   if (!unlimited && maxUses > 0 && uses >= maxUses) return { ok: false, reason: 'kuota key habis' };
-
   return {
     ok: true,
     source: 'firestore',
     payload: {
       id: key,
       tier: doc.tier || 'pro',
+      plan: plan || null,
       exp: Number.isFinite(expiresAt) ? Math.floor(expiresAt / 1000) : null,
       unlimited,
       uses,

@@ -31,7 +31,7 @@ swallowed in headless environments.
 ## License
 
 Installer requires a key and writes it once to
-`~/.config/opencode/.suppresor-key`. `TTK-*` keys are validated by reading
+`~/.config/opencode/.suppresor-key`. `TIKI-*` keys are validated by reading
 `accessKeys/{key}` from Firestore; `SRK1` keys verify offline. Runtime only reads.
 Missing or invalid key blocks the plugin and the `tiki` agent. No device id,
 usage counter, activation snapshot, gateway transform, or Firestore write is created.
