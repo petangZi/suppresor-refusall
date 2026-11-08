@@ -16,7 +16,10 @@ NC='\033[0m'
 # Config
 REPO="petangZi/suppresor-refusall"
 BRANCH="main"
-BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+BASE_DIR="$PWD"
+if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
+  BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
 CONFIG_ROOT="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}"
 PLUGIN_DIR="$CONFIG_ROOT/plugins/suppresor-refusall"
 COMMANDS_DIR="$CONFIG_ROOT/commands"

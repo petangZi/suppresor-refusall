@@ -4,6 +4,18 @@ All notable changes to Suppresor Refusall by Redz are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.11.4] - 2026-11-08
+
+### Fixed
+- `curl | bash` no longer crashes on `BASH_SOURCE[0]` with `set -u`. This was
+  aborting the installer before any file or config was written.
+- `BASE_DIR` falls back to `$PWD` when the script is piped, and resolves to the
+  script directory when run as a file.
+
+### Verified
+- Remote `curl | bash` install writes config, key, plugin, and agent files.
+- Full suite: 87/87.
+
 ## [2.11.3] - 2026-11-08
 
 ### Fixed
