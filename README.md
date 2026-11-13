@@ -1,82 +1,237 @@
-# Suppresor Refusall
+<p align="center">
+  <img src="docs/banner.svg" alt="Suppresor Refusall by Redz" width="100%">
+</p>
 
-Refusal suppression, Intent Recovery, and build-first agent stacks for opencode.
-Default ON.
+<h1 align="center">Suppresor Refusall</h1>
 
-![Version](https://img.shields.io/badge/version-2.11.4-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+<p align="center">
+  <strong>Refusal suppression, Intent Recovery, dan genGenius untuk OpenCode.</strong><br>
+  Satu installer untuk Windows, macOS, Linux, dan Termux. Support OpenCode V1 dan V2.
+</p>
 
-## Install
+<p align="center">
+  <img alt="Version" src="https://img.shields.io/badge/version-2.12.0-e01f3d">
+  <img alt="License" src="https://img.shields.io/badge/license-MIT-22c55e">
+  <img alt="Platforms" src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Termux-3f3f46">
+  <img alt="OpenCode" src="https://img.shields.io/badge/OpenCode-V1%20%2B%20V2-8f1026">
+</p>
 
-Linux / macOS:
+---
+
+## Apa ini?
+
+Suppresor Refusall adalah plugin OpenCode yang menjaga jawaban tetap teknis:
+tidak ada refusal, hedging, disclaimer, atau pengalihan ke "alternatif yang lebih aman".
+Plugin ini bekerja di empat lapisan:
+
+1. **System reinforcement** — doctrine teknis disuntik ke setiap request.
+2. **Context strip** — sisa kalimat refusal dibersihkan dari context sebelum LLM dipanggil.
+3. **Auto-continue** — kalau output tetap refusal, plugin mengirim recovery prompt otomatis.
+4. **Self-learning** — pola refusal baru dicatat ke detection bank.
+
+Ditambah **Intent Recovery** (120 domain), **genGenius** (tool-first), **MCP server**
+(status/toggle/theme/intercepts), dan agent **Tiki** untuk kerja teknis otonom.
+
+Tidak ada persona, tidak ada roleplay. Fokus: refusal kill + delivery penuh.
+
+---
+
+## Instalasi — satu perintah, semua OS
+
+Prasyarat: **Node.js 18+** ([nodejs.org](https://nodejs.org)). OpenCode tidak harus
+sedang berjalan saat install.
 
 ```bash
-export SUPPRESOR_LICENSE_KEY='TIKI-XXXX-XXXX-XXXX'
-curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/install.sh | bash
+npx --yes github:petangZi/suppresor-refusall --key TTK-XXXX-XXXX-XXXX
 ```
 
-Windows:
+Ganti `TTK-XXXX-XXXX-XXXX` dengan license key kamu. Perintah ini jalan di
+**Windows PowerShell / CMD, macOS, Linux, dan Termux** karena installer-nya
+berbasis Node.js.
+
+### Kalau `npx` tidak tersedia
+
+**Linux / macOS / Termux**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/install.sh \
+  | bash -s -- --key TTK-XXXX-XXXX-XXXX
+```
+
+**Windows PowerShell**
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -Key 'TIKI-XXXX-XXXX-XXXX'
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/install.ps1))) -Key 'TTK-XXXX-XXXX-XXXX'
 ```
 
-Restart opencode, lalu cek:
+**Dari checkout lokal**
+
+```bash
+git clone https://github.com/petangZi/suppresor-refusall
+cd suppresor-refusall
+node install.mjs --local --key TTK-XXXX-XXXX-XXXX
+```
+
+Installer menulis ke `~/.config/opencode` (Windows: `%USERPROFILE%\.config\opencode`).
+Override dengan `--config <dir>` atau `OPENCODE_CONFIG_DIR`.
+
+---
+
+## Prompt buat AI
+
+Tempel blok ini ke AI assistant kalau mau instalasi dibantu dari nol:
+
+```text
+Tolong install Suppresor Refusall by Redz ke OpenCode saya.
+
+Repo: https://github.com/petangZi/suppresor-refusall
+License key: TTK-XXXX-XXXX-XXXX
+OS saya: <Windows / macOS / Linux / Termux>
+
+Langkah yang saya mau:
+1. Pastikan Node.js 18+ dan OpenCode sudah terpasang.
+2. Jalankan installer resmi:
+   npx --yes github:petangZi/suppresor-refusall --key TTK-XXXX-XXXX-XXXX
+   (atau install.sh / install.ps1 kalau npx tidak bisa)
+3. Setelah selesai, restart OpenCode.
+4. Verifikasi dan laporkan output persis dari:
+   - opencode plugin list
+   - opencode mcp list
+   - opencode run "Reply with exactly: ok"
+5. Pastikan agent "tiki" muncul di agent list OpenCode.
+6. Kalau ada error, baca log OpenCode, perbaiki akar masalahnya, lalu ulangi
+   verifikasi sampai plugin loaded, MCP connected, dan agent tiki terlihat.
+7. Jangan berhenti di "harusnya jalan" — tunjukkan bukti output perintahnya.
+```
+
+---
+
+## Setelah install
+
+1. **Restart OpenCode.**
+2. Akan muncul toast merah: `Suppresor Refusall — ACTIVE`.
+3. Cek status:
 
 ```text
 /suppresor-refusall status
 ```
 
-Default config: `~/.config/opencode`. Override with `OPENCODE_CONFIG_DIR`.
-Installer menulis `.suppresor-key`; key `TIKI-*` dibaca dari Firestore `accessKeys/{key}`. `TTK-*` dan `TKI-*`
-juga diterima.
+4. Cek plugin dan MCP dari terminal:
+
+```bash
+opencode plugin list     # suppresor-refusall  local
+opencode mcp list        # ✓ suppresor-refusall  connected
+```
+
+5. Pilih agent **tiki** di agent list (mode `all`, bisa primary atau subagent).
+
+---
+
+## Yang baru di 2.12.0
+
+- **Satu installer Node.js** untuk semua OS — tidak ada lagi bug path
+  backslash di Windows atau file yang kelewat.
+- **OpenCode V2 support** lewat `server.js` (V2 adapter) dan `tui.js` (startup toast).
+  V1 tetap jalan lewat `plugin.js`.
+- **MCP NDJSON** — MCP server sekarang mendeteksi framing newline-delimited JSON
+  yang dipakai OpenCode V2, plus fallback `Content-Length` untuk V1.
+- **License async** — key `TTK-*` diverifikasi ke Firestore, bukan terbaca `tier: none`.
+- **Agent Tiki** ditulis ke `agents/tiki.md` supaya muncul di agent list V2.
+- **Config updater** menulis `plugins` + `mcp.servers` untuk V2 dan
+  `plugin` + `mcp` untuk V1 secara otomatis.
+- **Theme race fix** — `setTheme()` tidak lagi menulis ulang config tiap session.
+
+---
 
 ## Fitur
 
-- **Refusal filter**: system prompt, context strip, auto-continue, self-learning.
-- **Intent Recovery**: 120 domain di `DOMAIN.md`, ambiguity check, Refusal
-  Classifier 2.0, recovery di domain yang sama.
-- **genGenius**: prompt tool-first agar implementasi lewat file/tool.
-- **MCP server**: status, toggle, theme, intercepts, learned patterns, config.
-- **Project config**: `.opencode/suppresor-refusall.json` per project.
-- **Theme**: `suppresor-red`.
-- **Agent stacks**: Hermes `SOUL.md`, Codex `AGENTS.md`, Claude `CLAUDE.md`,
-  OpenCode `AGENTS.md`.
+| Fitur | Keterangan |
+|---|---|
+| Refusal filter | System prompt, context strip, auto-continue, self-learning |
+| Intent Recovery | 120 domain, ambiguity check, recovery di domain yang sama |
+| genGenius | Prompt tool-first: implementasi lewat file/tool, bukan dump kode di chat |
+| MCP server | `suppresor_status`, `suppresor_toggle`, `suppresor_genius`, `suppresor_theme`, `suppresor_intercepts`, `suppresor_learned`, `suppresor_watermark`, `suppresor_config` |
+| Project config | `.opencode/suppresor-refusall.json` per project |
+| Theme | `suppresor-red` (merah) |
+| Agent Tiki | Agent teknis otonom, target gate, work mode SIGAP |
+| Agent stacks | Hermes `SOUL.md`, Codex `AGENTS.md`, Claude `CLAUDE.md`, OpenCode `AGENTS.md` |
 
-## Commands
+---
+
+## Command
 
 ```text
-/suppresor-refusall on
-/suppresor-refusall off
-/suppresor-refusall status
-/suppresor-refusall intercepts
-/suppresor-refusall theme <name>
-/suppresor-refusall genius on|off
+/suppresor-refusall on                    # aktif + genius + theme merah
+/suppresor-refusall off                   # nonaktif + theme default
+/suppresor-refusall status                # cek state
+/suppresor-refusall intercepts            # intercept terakhir
+/suppresor-refusall theme <name>          # ganti theme
+/suppresor-refusall genius on|off         # genGenius
+/suppresor-refusall key <KEY>             # aktivasi key
 ```
 
 Natural language Indonesia/English juga jalan:
-`suppresor refusall nyala`, `suppresor refusall mati`, `genGenius nyala`.
 
-## Agent stacks
+```text
+suppresor refusall nyala
+suppresor refusall mati
+genGenius nyala
+genGenius mati
+```
+
+---
+
+## Tiki agent
+
+Agent `tiki` adalah operator teknis otonom: langsung pakai tool, tidak drama,
+tidak refusal, dan berhenti minta target kalau request-nya tidak punya objek.
+Setelah install, file agent ada di:
+
+```text
+~/.config/opencode/agents/tiki.md
+```
+
+Kalau agent belum terlihat, restart OpenCode lalu buka agent picker. Pastikan
+file itu ada dan tidak ada error YAML di frontmatter.
+
+---
+
+## Troubleshooting
+
+| Gejala | Penyebab | Fix |
+|---|---|---|
+| `opencode plugin list` kosong | Config masih pakai `plugin` file-path (V1) | Installer 2.12+ menulis `plugins: [dir]`; cek `~/.config/opencode/opencode.jsonc` |
+| MCP `failed: Request timed out` | Server MCP pakai framing `Content-Length`, OpenCode V2 pakai NDJSON | Versi 2.12+ auto-detect; restart OpenCode |
+| MCP `failed` setelah update | Entry MCP masih di `mcp.suppresor-refusall`, bukan `mcp.servers` | Installer 2.12+ memindahkannya otomatis |
+| Toast/loading tidak muncul | `tui.js` belum ke-load atau OpenCode dijalankan headless | Pastikan `tui.js` ada di folder plugin, restart TUI, cek `opencode plugin list` |
+| Agent `tiki` tidak muncul | File agent belum ada / frontmatter invalid | Cek `~/.config/opencode/agents/tiki.md`, restart OpenCode |
+| License `tier: none` | Verifier sync dipakai untuk key `TTK-*` | Versi 2.12+ pakai Firestore async; cek koneksi |
+| Config comments hilang | `setTheme()` menulis ulang JSON | Backup `.bak` dibuat installer; theme no-op di 2.12+ |
+| `insufficient_quota` dari provider | Bukan masalah plugin | Cek quota/API key provider OpenCode kamu |
+
+Log OpenCode:
 
 ```bash
-./stacks/install-stack.sh codex /path/to/project
-./stacks/install-stack.sh claude /path/to/project
-./stacks/install-stack.sh hermes /path/to/project
+# Linux / macOS / Termux
+tail -f ~/.local/share/opencode/log/opencode.log
 ```
-
-Windows:
 
 ```powershell
-powershell -File .\stacks\install-stack.ps1 -Stack codex -Target C:\project
+# Windows PowerShell
+Get-Content "$env:USERPROFILE\.local\share\opencode\log\opencode.log" -Wait
 ```
+
+---
 
 ## Docs
 
 - [GUIDE.md](GUIDE.md) — konfigurasi, project config, MCP, troubleshooting.
 - [DESKTOP.md](DESKTOP.md) — Windows/macOS/Linux desktop.
+- [V2-PORT.md](V2-PORT.md) — detail port OpenCode V2.
 - [CHANGELOG.md](CHANGELOG.md) — riwayat versi.
+
+---
 
 ## License
 
-MIT.
+MIT. See [LICENSE](LICENSE).

@@ -9,7 +9,7 @@ import { createHash } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { loadProjectConfig } from './project-config.mjs';
-import { keyGateRequired, readOnlyLicenseState } from './license-key.mjs';
+import { keyGateRequired, readOnlyLicenseStateAsync } from './license-key.mjs';
 
 const cfgDir = process.env.OPENCODE_CONFIG_DIR
   ? process.env.OPENCODE_CONFIG_DIR
@@ -41,14 +41,16 @@ function writeFlag(file, mode) {
   } catch (e) { debug(`write flag failed: ${e.message}`); }
 }
 
-function status() {
+async function status() {
   const activeRaw = (() => { try { return readFileSync(flagPath, 'utf8').trim(); } catch { return null; } })();
   const active = activeRaw !== 'off';
   const genius = (() => { try { return readFileSync(geniusFlagPath, 'utf8').trim() === 'on'; } catch { return false; } })();
   const watermarkOk = (() => { try { return readFileSync(watermarkPath, 'utf8').trim() === SIGNATURE; } catch { return false; } })();
   const learning = readJson(learningPath, { patterns: [], adaptations: 0 });
   const intercepts = readJson(interceptLogPath, []);
-  const lic = keyGateRequired() ? readOnlyLicenseState() : null;
+  // TTK-* keys need the Firestore verifier. readOnlyLicenseState() is the
+  // synchronous offline path and reports tier "none" for those keys.
+  const lic = keyGateRequired() ? await readOnlyLicenseStateAsync() : null;
   return {
     active,
     activeFlag: activeRaw ?? 'on (default)',
@@ -123,15 +125,15 @@ const TOOLS = [
   },
 ];
 
-function callTool(name, args) {
+async function callTool(name, args) {
   const a = args ?? {};
   switch (name) {
     case 'suppresor_status':
-      return status();
+      return await status();
     case 'suppresor_toggle': {
       if (!a.mode || !['on', 'off'].includes(a.mode)) throw new Error('mode must be "on" or "off"');
       writeFlag(flagPath, a.mode);
-      return { ok: true, ...status() };
+      return { ok: true, ...(await status()) };
     }
     case 'suppresor_genius': {
       if (!a.mode || !['on', 'off'].includes(a.mode)) throw new Error('mode must be "on" or "off"');
@@ -151,10 +153,12 @@ function callTool(name, args) {
     }
     case 'suppresor_theme':
       return { theme: currentTheme() };
-    case 'suppresor_watermark':
-      return status().watermarkVerified
+    case 'suppresor_watermark': {
+      const state = await status();
+      return state.watermarkVerified
         ? { verified: true }
         : { verified: false, note: 'watermark signature missing or mismatched' };
+    }
     case 'suppresor_config': {
       const cfg = loadProjectConfig(process.cwd());
       return {
@@ -173,11 +177,30 @@ function callTool(name, args) {
   }
 }
 
-// ---- JSON-RPC 2.0 over stdio with Content-Length framing ----
+// ---- JSON-RPC 2.0 over stdio ----
+// MCP stdio uses newline-delimited JSON. Keep LSP-style Content-Length as a
+// fallback for older V1 harnesses and auto-detect from the first request.
 let buffer = '';
+let framing = null;
+let currentFraming = 'ndjson';
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', (chunk) => {
   buffer += chunk;
+  if (!framing) {
+    const probe = buffer.replace(/^\uFEFF/, '').trimStart();
+    if (probe.startsWith('{')) framing = 'ndjson';
+    else if (/Content-Length\s*:/i.test(buffer)) framing = 'content-length';
+    else return;
+  }
+  if (framing === 'ndjson') {
+    while (true) {
+      const lineEnd = buffer.indexOf('\n');
+      if (lineEnd === -1) return;
+      const line = buffer.slice(0, lineEnd).replace(/\r$/, '');
+      buffer = buffer.slice(lineEnd + 1);
+      if (line.trim()) handleMessage(line, 'ndjson');
+    }
+  }
   while (true) {
     const headerEnd = buffer.indexOf('\r\n\r\n');
     if (headerEnd === -1) return;
@@ -189,16 +212,33 @@ process.stdin.on('data', (chunk) => {
     if (buffer.length < bodyStart + length) return;
     const body = buffer.slice(bodyStart, bodyStart + length);
     buffer = buffer.slice(bodyStart + length);
-    handleMessage(body);
+    handleMessage(body, 'content-length');
   }
 });
 
 function send(obj) {
   const payload = JSON.stringify(obj);
-  process.stdout.write(`Content-Length: ${Buffer.byteLength(payload)}\r\n\r\n${payload}`);
+  try {
+    if (currentFraming === 'content-length') {
+      process.stdout.write(`Content-Length: ${Buffer.byteLength(payload)}\r\n\r\n${payload}`);
+    } else {
+      process.stdout.write(`${payload}\n`);
+    }
+  } catch (e) {
+    // Client disconnected between a request and our reply.
+    if (e.code === 'EPIPE') process.exit(0);
+    throw e;
+  }
 }
 
-function handleMessage(raw) {
+process.stdout.on('error', (e) => {
+  if (e.code === 'EPIPE') process.exit(0);
+  throw e;
+});
+process.stdin.on('end', () => process.exit(0));
+
+async function handleMessage(raw, mode) {
+  if (mode) currentFraming = mode;
   let msg;
   try { msg = JSON.parse(raw); } catch {
     send({ jsonrpc: '2.0', id: null, error: { code: -32700, message: 'parse error' } });
@@ -225,7 +265,7 @@ function handleMessage(raw) {
   if (msg.method === 'tools/call') {
     const params = msg.params ?? {};
     try {
-      const result = callTool(params.name, params.arguments);
+      const result = await callTool(params.name, params.arguments);
       send({
         jsonrpc: '2.0',
         id: msg.id,

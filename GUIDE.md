@@ -20,24 +20,28 @@ Complete guide for using Suppresor Refusall by Redz with opencode.
 ### 5-Minute Setup
 
 ```bash
-# 1. Install plugin
-mkdir -p ~/.config/opencode/plugins/suppresor-refusall
-curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/plugin.js \
-  -o ~/.config/opencode/plugins/suppresor-refusall/plugin.js
-curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/package.json \
-  -o ~/.config/opencode/plugins/suppresor-refusall/package.json
+# One command, all OS (Node.js 18+)
+npx --yes github:petangZi/suppresor-refusall --key TTK-XXXX-XXXX-XXXX
 
-# 2. Register plugin in config
-# Edit ~/.config/opencode/opencode.jsonc:
-# Add "./plugins/suppresor-refusall/plugin.js" to plugin array
-
-# 3. Install command (for menu)
-mkdir -p ~/.config/opencode/commands
-curl -fsSL https://raw.githubusercontent.com/petangZi/suppresor-refusall/main/suppresor-refusall.md \
-  -o ~/.config/opencode/commands/suppresor-refusall.md
-
-# 4. Restart opencode
+# Restart OpenCode
 opencode
+```
+
+The installer writes the plugin, command, skill, theme, MCP entry, and the
+`tiki` agent, then selects the V1 or V2 config format automatically.
+
+Manual V1 layout (only if you cannot use the installer):
+
+```bash
+mkdir -p ~/.config/opencode/plugins/suppresor-refusall
+cp plugin.js server.js tui.js mcp-server.mjs refusal-patterns.mjs \
+  project-config.mjs intent-recovery.mjs license.mjs license-key.mjs \
+  gate-client.mjs firestore-client.js firestore-access.json tiki-agent.mjs \
+  tiki-idle.mjs agent-tiki.md package.json DOMAIN.md \
+  ~/.config/opencode/plugins/suppresor-refusall/
+mkdir -p ~/.config/opencode/commands ~/.config/opencode/skills/suppresor-refusall
+cp suppresor-refusall.md ~/.config/opencode/commands/
+cp SKILL.md ~/.config/opencode/skills/suppresor-refusall/
 ```
 
 ### Verify Installation

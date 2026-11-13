@@ -4,6 +4,33 @@ All notable changes to Suppresor Refusall by Redz are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.12.0] - 2026-11-13
+
+### Added
+- Universal Node.js installer (`install.mjs`) used by `install.sh`, `install.ps1`,
+  and `npx github:petangZi/suppresor-refusall`. Windows, macOS, Linux, and
+  Termux share one code path.
+- OpenCode V2 server adapter (`server.js`) bridging V1 hooks to `session.hook`,
+  `event.subscribe`, `session.synthetic`, and `session.context`.
+- OpenCode V2 TUI part (`tui.js`) with the startup toast and a palette status
+  command.
+- Automatic `agents/tiki.md` generation so the Tiki agent appears in the V2
+  agent list.
+
+### Fixed
+- Windows installer built raw URLs with backslashes (`themes\...`) and failed on
+  `themes/`, `server/`, and `stacks/` downloads.
+- MCP server only spoke LSP `Content-Length` framing and timed out against
+  OpenCode V2's newline-delimited JSON transport.
+- MCP status used the synchronous license verifier and reported `tier: none`
+  for `TTK-*` keys.
+- `setTheme()` rewrote `opencode.jsonc` on every session, racing config saves
+  and stripping comments even when the theme did not change.
+- Config updater now writes `plugins` + `mcp.servers` for V2 and removes stale
+  V1 file-path entries; V1 gets `plugin` + `mcp`.
+- Installer verification no longer greps for a V1 file path that V2 configs do
+  not contain.
+
 ## [2.11.4] - 2026-11-08
 
 ### Fixed

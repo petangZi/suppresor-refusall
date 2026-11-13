@@ -203,6 +203,10 @@ function setTheme(themeName) {
     if (existsSync(configPath)) {
       config = JSON.parse(stripJsoncComments(readFileSync(configPath, 'utf8')));
     }
+    // No-op when the theme already matches. Rewriting on every session used to
+    // collapse a concurrent config save into a partial-file race and strip
+    // comments even when nothing changed.
+    if (config.theme === themeName) return;
     config.theme = themeName;
     writeFileSync(configPath, JSON.stringify(config, null, 2), { mode: 0o644 });
   } catch (e) { log(`failed to set theme: ${e.message}`); }
