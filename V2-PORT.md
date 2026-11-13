@@ -2,7 +2,7 @@
 
 Upstream 2.11.x shipped a V1 plugin (`export default async ({ client }) => ({ ...hooks })`).
 OpenCode 2.x loads V2 plugins (`Plugin.define({ id, setup(ctx) })`) and keeps
-support for V1 implementations only through the migration path. As of 2.12.0
+support for V1 implementations only through the migration path. As of 2.13.0
 this repository ships both:
 
 - `plugin.js` — the original V1 implementation.

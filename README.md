@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-2.12.0-e01f3d">
+  <img alt="Version" src="https://img.shields.io/badge/version-2.13.0-e01f3d">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-22c55e">
   <img alt="Platforms" src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Termux-3f3f46">
   <img alt="OpenCode" src="https://img.shields.io/badge/OpenCode-V1%20%2B%20V2-8f1026">
@@ -75,6 +75,24 @@ node install.mjs --local --key TTK-XXXX-XXXX-XXXX
 Installer menulis ke `~/.config/opencode` (Windows: `%USERPROFILE%\.config\opencode`).
 Override dengan `--config <dir>` atau `OPENCODE_CONFIG_DIR`.
 
+Installer memakai folder staging: semua file diunduh dan dicek dulu, baru
+ditukar ke folder live. Kalau jaringan putus di tengah jalan, install lama
+tetap utuh — tidak ada lagi `tiki` hilang karena install setengah jadi.
+
+### Cek dan repair
+
+```bash
+# cek file, agent tiki, plugin, dan MCP tanpa mengubah apa pun
+npx --yes github:petangZi/suppresor-refusall --doctor
+
+# pasang ulang di atas install lama, pakai key yang sudah tersimpan
+npx --yes github:petangZi/suppresor-refusall --repair
+```
+
+Kalau `--doctor` bilang ada yang kurang, jalankan `--repair`. Agent `tiki`
+juga di-self-heal setiap OpenCode boot, jadi file yang terhapus otomatis
+kembali.
+
 ---
 
 ## Prompt buat AI
@@ -127,16 +145,24 @@ opencode mcp list        # ✓ suppresor-refusall  connected
 
 ---
 
-## Yang baru di 2.12.0
+## Yang baru di 2.13.0
 
-- **Satu installer Node.js** untuk semua OS — tidak ada lagi bug path
-  backslash di Windows atau file yang kelewat.
+- **Installer anti-partial** — semua file diunduh ke folder staging, dicek
+  ukurannya, di-`node --check`, lalu ditukar atomik ke folder live. Kalau satu
+  file gagal, install lama tetap utuh dan tidak ada config setengah jadi.
+- **`--doctor`** — cek cepat tanpa mengubah apa pun:
+  `npx --yes github:petangZi/suppresor-refusall --doctor`.
+  Kalau ada yang hilang, `--repair` memasang ulang dan memakai key tersimpan.
+- **Tiki tidak hilang lagi** — `agents/tiki.md` ditulis sebelum swap,
+  diverifikasi, dan di-self-heal setiap boot V1/V2 kalau terhapus/terpotong.
+- **Loading screen ringan** — idle UI default `lite`: kartu compact, animasi
+  boot 6 frame (~0,7 detik), lalu clear otomatis 6 detik. Tidak ada redraw
+  250 ms selama 30 detik. Mode lama tetap ada: `SUPPRESOR_IDLE_UI=full`.
 - **OpenCode V2 support** lewat `server.js` (V2 adapter) dan `tui.js` (startup toast).
   V1 tetap jalan lewat `plugin.js`.
-- **MCP NDJSON** — MCP server sekarang mendeteksi framing newline-delimited JSON
-  yang dipakai OpenCode V2, plus fallback `Content-Length` untuk V1.
+- **MCP NDJSON** — MCP server mendeteksi framing newline-delimited JSON yang
+  dipakai OpenCode V2, plus fallback `Content-Length` untuk V1.
 - **License async** — key `TTK-*` diverifikasi ke Firestore, bukan terbaca `tier: none`.
-- **Agent Tiki** ditulis ke `agents/tiki.md` supaya muncul di agent list V2.
 - **Config updater** menulis `plugins` + `mcp.servers` untuk V2 dan
   `plugin` + `mcp` untuk V1 secara otomatis.
 - **Theme race fix** — `setTheme()` tidak lagi menulis ulang config tiap session.

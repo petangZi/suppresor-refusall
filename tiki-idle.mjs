@@ -1,8 +1,11 @@
-// Tiki idle UI (full-screen) — Part of Suppresor Refusall by Redz
-// Fills the opencode startup blank window with a full-screen branded idle
-// screen: gradient ANSI-shadow logo, live layer matrix, boot progress bar,
-// rotating tip carousel, live clock, watermark footer. Auto-clears via TTL,
-// on first session.created, and on process exit. Headless-safe.
+// Tiki idle UI — Part of Suppresor Refusall by Redz
+// Two modes:
+//   lite (default) — compact boot card, <1s animation, clears itself
+//   full           — the original full-screen animated matrix
+//
+// The lite path is intentionally static after the boot frames: no 250ms redraw
+// loop, no cursor takeover, no 30s background timer. Set SUPPRESOR_IDLE_UI=full
+// to keep the old screen, or SUPPRESOR_IDLE_UI=0 to disable it completely.
 // Invisible watermark: 0x54494b495445414d5245445445414d
 
 import { openSync, writeSync } from 'node:fs';
@@ -21,7 +24,10 @@ const GG = c(236);
 const BG = c(234);
 
 const FRAME_MS = intEnv('SUPPRESOR_IDLE_FRAME_MS', 250);
+const LITE_FRAME_MS = intEnv('SUPPRESOR_IDLE_LITE_FRAME_MS', 120);
+const LITE_TICKS = 6;
 const TTL_MS = intEnv('SUPPRESOR_IDLE_TTL_MS', 30000);
+const LITE_TTL_MS = intEnv('SUPPRESOR_IDLE_LITE_TTL_MS', 6000);
 const TIP_HOLD_TICKS = 14;
 
 const LOGO = [
@@ -36,14 +42,11 @@ const LOGO = [
 const LOGO_SHADES = [RED, HOT, MID, DIM, DEEP, DEEP];
 
 const TIPS = [
-  ['@tiki <request>', 'rute langsung ke TIKI LICKY — persona + suppression armed'],
-  ['/suppresor-refusall status', 'cek layer suppression + watermark install'],
-  ['/suppresor-refusall genius on', 'paksa tool usage — anti chat-dump mode'],
-  ['suppresor_learned (MCP)', 'pattern bank hasil self-learning L4'],
-  ['/suppresor-refusall off', 'disarm sementara — state tetap persists'],
-  ['"suppresor refusall nyala"', 'natural language toggle (id) jalan juga'],
-  ['suppresor_intercepts (MCP)', 'audit log percobaan refusal yang kena strip'],
-  ['@oracle / @librarian / @explore', 'delegate chains untuk task berat'],
+  ['@tiki <request>', 'direct route to TIKI LICKY'],
+  ['/suppresor-refusall status', 'layers, license, watermark'],
+  ['/suppresor-refusall off', 'disarm, state persists'],
+  ['suppresor_status (MCP)', 'same state from any agent'],
+  ['/suppresor-refusall genius on', 'force tool-first work'],
 ];
 
 const SPINNER = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
@@ -55,6 +58,7 @@ const idleState = {
   fd: null,
   timers: [],
   running: false,
+  mode: 'lite',
   tick: 0,
   tipIndex: 0,
   tipPhase: 'in',
@@ -108,13 +112,12 @@ function hbar(width) {
   return '═'.repeat(Math.max(4, width - 2));
 }
 
-function bootProgress() {
-  const pct = Math.min(100, Math.round((idleState.tick / 40) * 100));
+function bootProgress(ticks = 40) {
+  const pct = Math.min(100, Math.round((idleState.tick / ticks) * 100));
   return pct;
 }
 
-function drawProgressBar(width) {
-  const pct = bootProgress();
+function drawProgressBar(width, pct = bootProgress()) {
   const filled = Math.round((width - 22) * (pct / 100));
   const bar = RED('█'.repeat(filled)) + BG('░'.repeat(Math.max(0, width - 22 - filled)));
   const spin = SPINNER[idleState.tick % SPINNER.length];
@@ -130,8 +133,8 @@ function layerLine(left, right, revealed) {
   return `   ${mark} ${ORANGE(left[0])} ${name(left[1])}    ${mark} ${ORANGE(right[0])} ${name(right[1])}`;
 }
 
-function tipRow(text, gray) {
-  return `  ${ORANGE('tip')} ${G(String(idleState.tipIndex + 1).padStart(2, '0') + '/08')}  ${GG(text[0])}  ${G(text[1])}`;
+function tipRow(text) {
+  return `  ${ORANGE('tip')} ${G(String(idleState.tipIndex + 1).padStart(2, '0') + '/05')}  ${GG(text[0])}  ${G(text[1])}`;
 }
 
 function clock() {
@@ -140,7 +143,8 @@ function clock() {
   return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 
-function frame() {
+// ---- full mode: original animated screen ----
+function fullFrame() {
   const w = idleState.width;
   const rows = [];
   const pct = bootProgress();
@@ -162,19 +166,19 @@ function frame() {
   rows.push(layerLine(['L1', 'system inject'], ['L2', 'context strip'], l1));
   rows.push(layerLine(['L3', 'auto-continue'], ['L4', 'self-learning'], l3 || l4));
   rows.push('');
-  rows.push(drawProgressBar(w - 4));
+  rows.push(drawProgressBar(w - 4, pct));
   rows.push('');
   const tip = TIPS[idleState.tipIndex % TIPS.length];
   if (idleState.tipPhase === 'in') {
-    rows.push(tipRow(tip, G(FADE_IN[Math.min(FADE_IN.length - 1, idleState.tipStep)])));
+    rows.push(tipRow(tip));
   } else if (idleState.tipPhase === 'out') {
-    rows.push(tipRow(tip, G(FADE_OUT[Math.min(FADE_OUT.length - 1, idleState.tipStep)])));
+    rows.push(tipRow(tip));
   } else {
-    rows.push(tipRow(tip, WHITE));
+    rows.push(tipRow(tip));
   }
   rows.push(`  ${G('next')}  ${GG(TIPS[(idleState.tipIndex + 1) % TIPS.length][0])}`);
   rows.push('');
-  rows.push(`  ${DIM('idle')} ${pulse} ${c(232)('welcome')}   ${G('v2.3.0')}  ${GG('0x5449…414d')}  ${ORANGE(clock())}`);
+  rows.push(`  ${DIM('idle')} ${pulse} ${c(232)('welcome')}   ${G('v2.13.0')}  ${GG('0x5449…414d')}  ${ORANGE(clock())}`);
   rows.push(DEEP('╚' + hbar(w) + '╝'));
 
   idleState.height = rows.length;
@@ -203,30 +207,80 @@ function advanceTips() {
   }
 }
 
-function tickFrame() {
-  if (!idleState.running) return;
+function fullTick() {
+  if (!idleState.running || idleState.mode !== 'full') return;
   idleState.tick++;
   advanceTips();
-  ttyWrite('\x1b[H' + frame());
+  ttyWrite('\x1b[H' + fullFrame());
+}
+
+// ---- lite mode: compact card, boot frames only ----
+function liteFrame(progress) {
+  const w = Math.max(54, Math.min(72, idleState.width));
+  const barWidth = Math.max(24, w - 30);
+  const filled = Math.round(barWidth * (progress / 100));
+  const bar = RED('█'.repeat(filled)) + BG('░'.repeat(barWidth - filled));
+  const pct = `${String(progress).padStart(3)}%`;
+  const state = progress >= 100 ? ORANGE('READY') : WHITE('BOOT');
+  const tip = TIPS[idleState.tipIndex % TIPS.length];
+
+  const top = DEEP('╭' + '─'.repeat(w - 2) + '╮');
+  const bottom = DEEP('╰' + '─'.repeat(w - 2) + '╯');
+  const line = (s) => DEEP('│') + padCenter(s, w - 2) + DEEP('│');
+
+  const rows = [
+    top,
+    line(`${RED('S')}${HOT('U')}${MID('P')}${MID('P')}${RED('R')}${HOT('E')}${MID('S')}${MID('O')}${RED('R')}  ${WHITE('REFUSALL')}  ${GG('by Redz')}`),
+    line(`${GG('obliteratoratus mode')}  ${DIM('·')}  ${ORANGE('ACTIVE')}  ${DIM('·')}  ${G('v2.13.0')}`),
+    line(''),
+    line(`${RED('L1')} inject  ${RED('L2')} strip  ${RED('L3')} continue  ${RED('L4')} learn`),
+    line(`${bar}  ${state} ${pct}`),
+    line(`${ORANGE('tip')} ${GG(tip[0])}  ${G(tip[1])}`),
+    bottom,
+  ];
+  idleState.height = rows.length;
+  return rows.join('\n');
+}
+
+function liteTick() {
+  if (!idleState.running || idleState.mode !== 'lite') return;
+  idleState.tick++;
+  const progress = Math.min(100, Math.round((idleState.tick / LITE_TICKS) * 100));
+  ttyWrite('\x1b[H' + liteFrame(progress));
+  if (idleState.tick >= LITE_TICKS) {
+    clearTimers();
+    idleState.timers.push(setTimeout(() => stopIdleUI(), LITE_TTL_MS));
+  }
 }
 
 export function showIdleUI() {
   if (idleState.running) return;
+  const requested = (process.env.SUPPRESOR_IDLE_UI || 'lite').toLowerCase();
+  if (requested === '0' || requested === 'off' || requested === 'false') return;
   if (process.env.SUPPRESOR_SKIP_IDLE === '1') return;
-  if (process.env.SUPPRESOR_IDLE_UI === '0') return;
   if (process.env.CI === 'true') return;
+
   const fd = openTty();
   if (fd === null) return;
+
   idleState.running = true;
+  idleState.mode = requested === 'full' ? 'full' : 'lite';
   idleState.tick = 0;
   idleState.tipIndex = 0;
   idleState.tipPhase = 'in';
   idleState.tipStep = 0;
-  idleState.width = Math.max(70, Math.min(120, process.stdout.columns || 80));
-  ttyWrite('\x1b[2J\x1b[?25l\x1b[H');
-  ttyWrite(frame());
-  idleState.timers.push(setInterval(tickFrame, FRAME_MS));
-  idleState.timers.push(setTimeout(() => stopIdleUI(), TTL_MS));
+  idleState.width = Math.max(60, Math.min(120, process.stdout.columns || 80));
+  ttyWrite('\x1b[2J\x1b[H');
+
+  if (idleState.mode === 'full') {
+    ttyWrite('\x1b[?25l' + fullFrame());
+    idleState.timers.push(setInterval(fullTick, FRAME_MS));
+    idleState.timers.push(setTimeout(() => stopIdleUI(), TTL_MS));
+  } else {
+    ttyWrite(liteFrame(0));
+    idleState.timers.push(setInterval(liteTick, LITE_FRAME_MS));
+  }
+
   if (!idleState.exitHook) {
     const exitHook = () => stopIdleUI(true);
     process.once('exit', exitHook);

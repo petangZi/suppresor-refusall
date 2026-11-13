@@ -13,6 +13,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { scoreRefusal, stripRefusals, severity } from './refusal-patterns.mjs';
 import { getTikiAgent } from './tiki-agent.mjs';
+import { ensureTikiAgentFile } from './agent-file.mjs';
 import { spendUse, activateDevice, gateState, allowedNow, deviceId, setNotifier } from './license.mjs';
 import { transformTexts as gateTransform, heartbeat as gateHeartbeat } from './gate-client.mjs';
 import { DEFAULT_PROJECT_CONFIG, loadProjectConfig } from './project-config.mjs';
@@ -443,6 +444,8 @@ export const SuppresorRefusallPlugin = async ({ client, directory } = {}) => {
     // Registers the custom `tiki` agent (TIKI LICKY persona from Agent.md)
     // without clobbering user-defined agents; user config wins on key conflict.
     config: async (config) => {
+      // Self-heal a missing/truncated agent file left by a partial install.
+      try { ensureTikiAgentFile({ sourceDir: here }); } catch { /* best effort */ }
       const tiki = await getTikiAgent().catch(() => null);
       if (!tiki) return;
       config.agent = {

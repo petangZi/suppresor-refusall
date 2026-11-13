@@ -2,6 +2,7 @@
 // Loads the V1 core plugin and maps its hooks onto the V2 plugin/session API.
 
 import v1Factory from "./plugin.js";
+import { ensureTikiAgentFile } from "./agent-file.mjs";
 
 function toV1Message(message) {
   const type = message?.type;
@@ -47,6 +48,9 @@ export default {
   async setup(ctx) {
     // The idle TUI belongs to the client, not the V2 server process.
     if (!process.env.SUPPRESOR_SKIP_IDLE) process.env.SUPPRESOR_SKIP_IDLE = "1";
+
+    // Keep the agent visible even if an update or a partial install removed it.
+    try { ensureTikiAgentFile(); } catch { /* best effort */ }
 
     const client = {
       session: {

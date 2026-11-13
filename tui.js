@@ -154,7 +154,7 @@ export default Plugin.define({
           title: "Suppresor Refusall",
           message,
           variant,
-          duration: 5000,
+          duration: 3500,
         });
       } catch {
         /* TUI may not be ready yet */
@@ -166,8 +166,8 @@ export default Plugin.define({
     const active = read(flagPath) !== "off";
     toast(
       active
-        ? `ACTIVE — obliteratoratus mode · ${read(geniusFlagPath) === "on" ? "genius ON" : "genius OFF"} · /suppresor-refusall off to disable`
-        : "OFF — /suppresor-refusall on to arm",
+        ? `ACTIVE · genius ${read(geniusFlagPath) === "on" ? "ON" : "OFF"} · /suppresor-refusall off`
+        : "OFF · /suppresor-refusall on to arm",
       active ? "error" : "info",
     );
 

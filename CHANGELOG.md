@@ -4,6 +4,42 @@ All notable changes to Suppresor Refusall by Redz are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.13.0] - 2026-11-13
+
+### Added
+- `agent-file.mjs`: single resolver for `agents/tiki.md`, used by the installer,
+  the V1 plugin, and the V2 server adapter.
+- `--doctor` / `--repair` installer flags. `--doctor` checks files, agent
+  prompt, plugin entry, and MCP entry without writing anything. `--repair`
+  reinstalls over an existing setup and reuses `.suppresor-key`.
+- `agent-file.test.mjs`: covers agent creation, repair of a truncated agent
+  file, and no-op boots.
+- Install manifest (`.suppresor-install.json`) with per-file size and SHA-256
+  prefix.
+
+### Changed
+- Installer now downloads every file into a staging directory, validates sizes
+  and JSON, runs `node --check` on all runtime modules, writes the Tiki agent,
+  then atomically swaps the staged tree into place. A failed download or a
+  broken agent prompt aborts before the live install is touched.
+- Download retries increased to four with backoff; remote failures fall back to
+  the local package when one is present.
+- Old plugin directories are kept as `.suppresor-backup-*` (last two) and
+  restored automatically when the swap or post-install verification fails.
+- Config files are backed up before update and restored if the update or
+  verification fails.
+- `tiki-agent.mjs` no longer fetches the prompt from a different repository on
+  startup. The local `agent-tiki.md` is authoritative; remote fetch is opt-in
+  via `SUPPRESOR_TIKI_REMOTE=1` and capped at 5s.
+- Tiki agent file is self-healed on every V1/V2 boot when missing or truncated.
+
+### Performance
+- Startup idle UI defaults to `lite`: compact card, six 120ms boot frames, then a
+  single 6s auto-clear timer. The old 250ms full-screen redraw for 30s is
+  opt-in via `SUPPRESOR_IDLE_UI=full`.
+- No cursor takeover in lite mode; no background interval after boot.
+- Idle UI is disabled with `SUPPRESOR_IDLE_UI=0` (also `SUPPRESOR_SKIP_IDLE=1`).
+
 ## [2.12.0] - 2026-11-13
 
 ### Added

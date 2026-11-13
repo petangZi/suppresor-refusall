@@ -34,7 +34,7 @@ Manual V1 layout (only if you cannot use the installer):
 
 ```bash
 mkdir -p ~/.config/opencode/plugins/suppresor-refusall
-cp plugin.js server.js tui.js mcp-server.mjs refusal-patterns.mjs \
+cp plugin.js server.js tui.js agent-file.mjs mcp-server.mjs refusal-patterns.mjs \
   project-config.mjs intent-recovery.mjs license.mjs license-key.mjs \
   gate-client.mjs firestore-client.js firestore-access.json tiki-agent.mjs \
   tiki-idle.mjs agent-tiki.md package.json DOMAIN.md \
@@ -42,7 +42,12 @@ cp plugin.js server.js tui.js mcp-server.mjs refusal-patterns.mjs \
 mkdir -p ~/.config/opencode/commands ~/.config/opencode/skills/suppresor-refusall
 cp suppresor-refusall.md ~/.config/opencode/commands/
 cp SKILL.md ~/.config/opencode/skills/suppresor-refusall/
+mkdir -p ~/.config/opencode/agents
+(cd ~/.config/opencode/plugins/suppresor-refusall && node -e "import('./agent-file.mjs').then(m=>console.log(m.ensureTikiAgentFile()))")
 ```
+
+After a manual copy, run `npx --yes github:petangZi/suppresor-refusall --doctor`
+to confirm the agent, plugin, and MCP entries are all present.
 
 ### Verify Installation
 
@@ -186,6 +191,17 @@ No device id, usage counter, activation snapshot, or Firestore write is created.
 Tunables (environment): `SUPPRESOR_FREE_LIMIT`, `SUPPRESOR_MAX_DEVICES_PER_KEY`,
 `SUPPRESOR_LICENSE_RECHECK_MS`, `SUPPRESOR_OFFLINE_GRACE_MS`, `SUPPRESOR_OFFLINE`,
 `SUPPRESOR_DEBUG`.
+
+Startup screen:
+
+| Variable | Effect |
+|---|---|
+| `SUPPRESOR_IDLE_UI` | unset/`lite` = compact boot card, `full` = old 30s animated screen, `0`/`off` = disabled |
+| `SUPPRESOR_IDLE_LITE_FRAME_MS` | lite frame interval in ms (default 120) |
+| `SUPPRESOR_IDLE_LITE_TTL_MS` | lite card auto-clear in ms (default 6000) |
+| `SUPPRESOR_IDLE_FRAME_MS` | full-mode frame interval (default 250) |
+| `SUPPRESOR_IDLE_TTL_MS` | full-mode auto-clear (default 30000) |
+| `SUPPRESOR_SKIP_IDLE` | `1` disables the idle screen entirely |
 
 ### Minting keys (admin only)
 
