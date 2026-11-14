@@ -106,9 +106,9 @@ Kalau plugin gagal load setelah update, jalankan `--repair`; folder plugin ditul
 ulang dari versi repo, config lama tetap dibackup. Kalau update meminta migrasi
 config, terima migrasinya, lalu cek ulang dengan `--doctor`.
 
-Plugin lain di folder `plugins/` juga tidak disentuh oleh upgrade OpenCode. Yang
-menghapus semuanya cuma `opencode uninstall --purge` atau menghapus manual
-`~/.config/opencode`.
+Plugin lain di folder `plugins/` juga tidak disentuh oleh upgrade OpenCode.
+`opencode uninstall` pun secara default mempertahankan session, config, dan state.
+Yang menghapus semuanya cuma kalau kamu hapus manual folder `~/.config/opencode`.
 
 Sebelum update major, aman-nya:
 
