@@ -4,6 +4,35 @@ All notable changes to Suppresor Refusall by Redz are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.14.0] - 2026-11-14
+
+### Added
+- Five Tiki agents: `tiki` (base/router), `tiki-prompter` (prompt maker),
+  `tiki-coder` (alien-logic implementation), `tiki-architect` (1001-plan tree and
+  failure calculus), and `bigtiki` (orchestra lead for the three specialists).
+- TUI mode picker: selecting the `tiki` agent in the V2 agent picker opens
+  `dialog.select` with the four working modes and switches the session through
+  `session.switchAgent`. Escape returns to the previous agent.
+- `tiki-agents.mjs`: pure catalog shared by the installer, V1 config hook plugin.js,
+  TUI menu, and doctor so agent IDs, files, colors, and descriptions cannot drift.
+- Specialist prompts ship compact (6-7 KB) instead of duplicating the 106 KB base
+  prompt four times. Base `tiki` keeps full fidelity; specialists load fast.
+
+### Changed
+- `agent-file.mjs` now installs the full agent set through `ensureTikiAgents` and
+  verifies it through `verifyTikiAgents`. The base `ensureTikiAgentFile` stays as
+  a compatibility wrapper.
+- V1 `plugin.js` config hook registers all five agents. User-defined agents still
+  win on key conflict.
+- V2 `server.js` self-heals all five agents on boot.
+- Installer doctor checks every `agents/tiki*.md`, not only `agents/tiki.md`.
+
+### Fixed
+- A partial install with only `agents/tiki.md` could hide the specialist modes.
+  The installer now fails before swap if any mode prompt is missing, truncated, or
+  has no `Target Gate`, and repairs the set on the next boot.
+
+
 ## [2.13.0] - 2026-11-13
 
 ### Added

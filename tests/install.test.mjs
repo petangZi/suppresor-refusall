@@ -42,7 +42,12 @@ test('installer stages a complete V2 install with agent and manifest', () => {
       assert.ok(statSync(join(pluginDir, file)).size > 100, `${file} truncated`);
     }
     assert.ok(existsSync(join(pluginDir, '.suppresor-install.json')));
-    assert.ok(existsSync(join(cfg, 'agents', 'tiki.md')));
+    for (const id of ['tiki', 'tiki-prompter', 'tiki-coder', 'tiki-architect', 'bigtiki']) {
+      const path = join(cfg, 'agents', `${id}.md`);
+      assert.ok(existsSync(path), `${id} agent missing`);
+      assert.ok(statSync(path).size > 1200, `${id} agent truncated`);
+      assert.match(readFileSync(path, 'utf8'), /^---\n/);
+    }
     assert.ok(statSync(join(cfg, 'agents', 'tiki.md')).size > 5000);
     assert.ok(existsSync(join(cfg, 'commands', 'suppresor-refusall.md')));
     assert.ok(existsSync(join(cfg, 'skills', 'suppresor-refusall', 'SKILL.md')));
@@ -65,16 +70,16 @@ test('doctor detects a truncated tiki agent and repair restores it', () => {
   const cfg = tempConfig();
   try {
     assert.equal(run(cfg, ['--local', '--no-verify', '--key', 'TTK-TEST-0000']).status, 0);
-    const agent = join(cfg, 'agents', 'tiki.md');
+    const agent = join(cfg, 'agents', 'tiki-coder.md');
     writeFileSync(agent, '---\ndescription: broken\n---\n');
 
     const doctor = run(cfg, ['--doctor']);
     assert.notEqual(doctor.status, 0);
-    assert.match(`${doctor.stdout}${doctor.stderr}`, /agents\/tiki\.md/);
+    assert.match(`${doctor.stdout}${doctor.stderr}`, /agents\/tiki-coder\.md/);
 
     const repaired = run(cfg, ['--repair', '--local', '--no-verify']);
     assert.equal(repaired.status, 0, repaired.stderr || repaired.stdout);
-    assert.ok(statSync(agent).size > 5000);
+    assert.ok(statSync(agent).size > 1200);
     assert.equal(run(cfg, ['--doctor']).status, 0);
   } finally {
     rmSync(cfg, { recursive: true, force: true });

@@ -12,8 +12,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { scoreRefusal, stripRefusals, severity } from './refusal-patterns.mjs';
-import { getTikiAgent } from './tiki-agent.mjs';
-import { ensureTikiAgentFile } from './agent-file.mjs';
+import { getTikiAgents } from './tiki-agent.mjs';
+import { ensureTikiAgents } from './agent-file.mjs';
 import { spendUse, activateDevice, gateState, allowedNow, deviceId, setNotifier } from './license.mjs';
 import { transformTexts as gateTransform, heartbeat as gateHeartbeat } from './gate-client.mjs';
 import { DEFAULT_PROJECT_CONFIG, loadProjectConfig } from './project-config.mjs';
@@ -445,13 +445,11 @@ export const SuppresorRefusallPlugin = async ({ client, directory } = {}) => {
     // without clobbering user-defined agents; user config wins on key conflict.
     config: async (config) => {
       // Self-heal a missing/truncated agent file left by a partial install.
-      try { ensureTikiAgentFile({ sourceDir: here }); } catch { /* best effort */ }
-      const tiki = await getTikiAgent().catch(() => null);
-      if (!tiki) return;
-      config.agent = {
-        ...(config.agent || {}),
-        tiki,
-      };
+      try { ensureTikiAgents({ sourceDir: here }); } catch { /* best effort */ }
+      const agents = await getTikiAgents().catch(() => ({}));
+      if (!agents || Object.keys(agents).length === 0) return;
+      // User-defined agents win on key conflict.
+      config.agent = { ...agents, ...(config.agent || {}) };
     },
 
     event: async ({ event } = {}) => {

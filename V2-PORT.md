@@ -2,13 +2,14 @@
 
 Upstream 2.11.x shipped a V1 plugin (`export default async ({ client }) => ({ ...hooks })`).
 OpenCode 2.x loads V2 plugins (`Plugin.define({ id, setup(ctx) })`) and keeps
-support for V1 implementations only through the migration path. As of 2.13.0
+support for V1 implementations only through the migration path. As of 2.14.0
 this repository ships both:
 
 - `plugin.js` — the original V1 implementation.
 - `server.js` — a V2 server part that imports `plugin.js` and bridges its V1
   hooks onto the V2 API.
-- `tui.js` — a V2 TUI part for the startup toast and palette status command.
+- `tui.js` — a V2 TUI part for the startup toast, palette status command, and
+  Tiki mode picker (`session.agent.selected` -> `dialog.select` -> `session.switchAgent`).
 
 The V2 files sit at the plugin directory root, which is the V2 local-plugin
 convention (`server`, `tui`, `rpc`; `.js` is accepted).
@@ -96,3 +97,5 @@ detects the OpenCode major version and writes the matching shape.
   theme.
 - `tiki` agent visible in `/api/agent`.
 - `tui.js` startup toast appears on TUI load.
+- Selecting the `tiki` agent opens the mode picker; choosing a mode switches the
+  session agent and leaves the previous agent reachable through Escape.

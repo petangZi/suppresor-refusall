@@ -31,7 +31,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createInterface } from "node:readline/promises";
 
-const VERSION = "2.13.0";
+const VERSION = "2.14.0";
 const DEFAULT_REPO = "petangZi/suppresor-refusall";
 const DEFAULT_BRANCH = "main";
 const MANIFEST = ".suppresor-install.json";
@@ -353,8 +353,13 @@ const FILES = [
   "LICENSE",
   "V2-PORT.md",
   "tiki-agent.mjs",
+  "tiki-agents.mjs",
   "tiki-idle.mjs",
   "agent-tiki.md",
+  "agent-tiki-prompter.md",
+  "agent-tiki-coder.md",
+  "agent-tiki-architect.md",
+  "agent-bigtiki.md",
   "license.mjs",
   "license-key.mjs",
   "gate-client.mjs",
@@ -378,6 +383,15 @@ const FILES = [
   "scripts/update-config.mjs",
 ];
 
+const AGENT_SOURCES = [
+  "agent-tiki.md",
+  "agent-tiki-prompter.md",
+  "agent-tiki-coder.md",
+  "agent-tiki-architect.md",
+  "agent-bigtiki.md",
+];
+const AGENT_TARGETS = ["tiki", "tiki-prompter", "tiki-coder", "tiki-architect", "bigtiki"];
+
 // Anything below this size is a truncated download or an error page, not a
 // usable file. Keep the numbers intentionally low; the syntax check is the
 // stronger gate.
@@ -388,6 +402,10 @@ const MIN_BYTES = {
   "agent-file.mjs": 1000,
   "mcp-server.mjs": 2000,
   "agent-tiki.md": 5000,
+  "agent-tiki-prompter.md": 1200,
+  "agent-tiki-coder.md": 1200,
+  "agent-tiki-architect.md": 1200,
+  "agent-bigtiki.md": 1200,
   "license.mjs": 5000,
   "license-key.mjs": 2000,
   "gate-client.mjs": 1000,
@@ -402,6 +420,7 @@ const CRITICAL_JS = [
   "server.js",
   "tui.js",
   "agent-file.mjs",
+  "tiki-agents.mjs",
   "mcp-server.mjs",
   "tiki-agent.mjs",
   "tiki-idle.mjs",
@@ -426,6 +445,12 @@ function validateStaged(stageDir) {
     fail("agent-tiki.md is not a valid Tiki prompt");
   }
 
+  for (const source of AGENT_SOURCES) {
+    const text = readFileSync(join(stageDir, source), "utf8");
+    if (!text.includes("TIKI LICKY")) fail(`${source} is not a Tiki prompt`);
+    if (!text.includes("Target Gate")) fail(`${source} has no Target Gate`);
+  }
+
   try {
     JSON.parse(readFileSync(join(stageDir, "package.json"), "utf8"));
     JSON.parse(readFileSync(join(stageDir, "themes", "suppresor-red.json"), "utf8"));
@@ -444,12 +469,18 @@ function validateStaged(stageDir) {
 
 async function installAgent(stageDir, configDir) {
   const module = await import(`${pathToFileURL(join(stageDir, "agent-file.mjs")).href}?v=${Date.now()}`);
-  const result = module.ensureTikiAgentFile({ configDir, sourceDir: stageDir, force: true });
-  if (!result.path) fail(`Tiki agent install failed: ${result.reason}`);
-  const check = module.verifyTikiAgentFile({ configDir });
-  if (!check.ok) fail(`Tiki agent verification failed: ${check.reason}`);
-  ok(`agents/tiki.md (${Math.round(check.size / 1024)} KB)`);
-  return check.path;
+  const install = module.ensureTikiAgents({ configDir, sourceDir: stageDir, force: true });
+  if (!install.ok) {
+    const detail = install.failed.map((item) => `${item.id}: ${item.reason}`).join(", ");
+    fail(`Tiki agent install failed (${detail})`);
+  }
+  const check = module.verifyTikiAgents({ configDir });
+  if (!check.ok) {
+    const detail = check.problems.map((item) => `${item.id}: ${item.reason}`).join(", ");
+    fail(`Tiki agent verification failed (${detail})`);
+  }
+  for (const agent of check.agents) ok(`agents/${agent.id}.md (${Math.round(agent.size / 1024)} KB)`);
+  return check.agents.map((agent) => agent.path);
 }
 
 function swapPluginDir(stageDir, pluginDir, configDir) {
@@ -587,14 +618,17 @@ function verifyInstall(pluginDir, configDir) {
     if (statSync(destination).size < minimum) problems.push(`truncated: ${destination}`);
   }
 
-  const agentPath = join(configDir, "agents", "tiki.md");
-  try {
-    const agent = readFileSync(agentPath, "utf8");
-    if (Buffer.byteLength(agent, "utf8") < 5000) problems.push("agents/tiki.md is truncated");
-    if (!agent.startsWith("---\n") || !agent.includes("\n---\n")) problems.push("agents/tiki.md has invalid frontmatter");
-    if (!agent.includes("TIKI LICKY")) problems.push("agents/tiki.md is not the Tiki prompt");
-  } catch {
-    problems.push("agents/tiki.md is missing");
+  for (const id of AGENT_TARGETS) {
+    const agentPath = join(configDir, "agents", `${id}.md`);
+    try {
+      const agent = readFileSync(agentPath, "utf8");
+      const minimum = id === "tiki" ? 5000 : 1200;
+      if (Buffer.byteLength(agent, "utf8") < minimum) problems.push(`agents/${id}.md is truncated`);
+      if (!agent.startsWith("---\n") || !agent.includes("\n---\n")) problems.push(`agents/${id}.md has invalid frontmatter`);
+      if (!agent.includes("TIKI LICKY")) problems.push(`agents/${id}.md is not the Tiki prompt`);
+    } catch {
+      problems.push(`agents/${id}.md is missing`);
+    }
   }
 
   problems.push(...verifyConfig(pluginDir, configDir));
@@ -675,7 +709,7 @@ function doctor(configDir) {
   const problems = verifyInstall(pluginDir, configDir);
   if (problems.length === 0) {
     ok("plugin files present");
-    ok("agents/tiki.md present and valid");
+    ok(`agents/*.md present and valid (${AGENT_TARGETS.length} modes)`);
     ok("config has plugin + MCP entries");
     console.log(`\n${GREEN}Install is complete.${NC}\n`);
     return;
@@ -799,7 +833,7 @@ Files:
   ${pluginDir}
   ${join(configDir, "commands", "suppresor-refusall.md")}
   ${join(configDir, "skills", "suppresor-refusall", "SKILL.md")}
-  ${join(configDir, "agents", "tiki.md")}
+  ${AGENT_TARGETS.map((id) => join(configDir, "agents", `${id}.md`)).join("\n  ")}
   ${join(configDir, "themes", "suppresor-red.json")}
 
 MCP tools:

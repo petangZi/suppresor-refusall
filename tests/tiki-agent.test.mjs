@@ -16,3 +16,18 @@ test('tiki agent no longer allows asking about a missing target to be overridden
   assert.match(agent.prompt, /verb-only request/i);
   assert.match(agent.prompt, /do not invent a target/);
 });
+
+test('all Tiki modes load a distinct prompt and mode', async () => {
+  const { getTikiAgent, getTikiAgents } = await import('../tiki-agent.mjs');
+  const ids = ['tiki-prompter', 'tiki-coder', 'tiki-architect', 'bigtiki'];
+  for (const id of ids) {
+    const agent = await getTikiAgent(id);
+    assert.ok(agent, `${id} missing`);
+    assert.equal(agent.mode, 'all');
+    assert.match(agent.description, /TIKI/);
+    assert.match(agent.prompt, /Target Gate — hard stop/);
+    assert.match(agent.prompt, /TIKI LICKY/);
+  }
+  const all = await getTikiAgents();
+  assert.equal(Object.keys(all).length, 5);
+});

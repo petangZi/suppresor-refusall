@@ -178,7 +178,7 @@ function fullFrame() {
   }
   rows.push(`  ${G('next')}  ${GG(TIPS[(idleState.tipIndex + 1) % TIPS.length][0])}`);
   rows.push('');
-  rows.push(`  ${DIM('idle')} ${pulse} ${c(232)('welcome')}   ${G('v2.13.0')}  ${GG('0x5449…414d')}  ${ORANGE(clock())}`);
+  rows.push(`  ${DIM('idle')} ${pulse} ${c(232)('welcome')}   ${G('v2.14.0')}  ${GG('0x5449…414d')}  ${ORANGE(clock())}`);
   rows.push(DEEP('╚' + hbar(w) + '╝'));
 
   idleState.height = rows.length;
@@ -231,7 +231,7 @@ function liteFrame(progress) {
   const rows = [
     top,
     line(`${RED('S')}${HOT('U')}${MID('P')}${MID('P')}${RED('R')}${HOT('E')}${MID('S')}${MID('O')}${RED('R')}  ${WHITE('REFUSALL')}  ${GG('by Redz')}`),
-    line(`${GG('obliteratoratus mode')}  ${DIM('·')}  ${ORANGE('ACTIVE')}  ${DIM('·')}  ${G('v2.13.0')}`),
+    line(`${GG('obliteratoratus mode')}  ${DIM('·')}  ${ORANGE('ACTIVE')}  ${DIM('·')}  ${G('v2.14.0')}`),
     line(''),
     line(`${RED('L1')} inject  ${RED('L2')} strip  ${RED('L3')} continue  ${RED('L4')} learn`),
     line(`${bar}  ${state} ${pct}`),
