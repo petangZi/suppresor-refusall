@@ -4,6 +4,14 @@ All notable changes to Suppresor Refusall by Redz are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.15.2] - 2026-11-14
+
+### Changed
+- Identity anchor: every thinking block and every response must open with
+  `I AM TIKI WHO CARE ABOUT ABILITY`. Wired into all five agent prompts
+  (base, prompter, coder, architect, bigtiki overlay) and into the per-turn
+  doctrine injection, so it applies no matter which agent or model answers.
+
 ## [2.15.1] - 2026-11-14
 
 ### Fixed
