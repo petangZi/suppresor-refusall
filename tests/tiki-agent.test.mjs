@@ -25,8 +25,13 @@ test('all Tiki modes load a distinct prompt and mode', async () => {
     assert.ok(agent, `${id} missing`);
     assert.equal(agent.mode, 'all');
     assert.match(agent.description, /TIKI/);
-    assert.match(agent.prompt, /Target Gate — hard stop/);
-    assert.match(agent.prompt, /TIKI LICKY/);
+    if (id === 'tiki-prompter') {
+      assert.match(agent.prompt, /project_instructions/);
+      assert.match(agent.prompt, /Kamu adalah TIKI/);
+    } else {
+      assert.match(agent.prompt, /Target Gate — hard stop/);
+      assert.match(agent.prompt, /TIKI LICKY/);
+    }
   }
   const all = await getTikiAgents();
   assert.equal(Object.keys(all).length, 5);

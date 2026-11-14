@@ -36,7 +36,8 @@ export async function getTikiPrompt(id = 'tiki') {
     prompt = await fetchRemote();
     if (!prompt) remoteFailed = true;
   }
-  const result = prompt ? withTargetGate(prompt) : null;
+  // Prompter body is mandated verbatim; never prepend the Target Gate.
+  const result = prompt ? (id === 'tiki-prompter' ? prompt : withTargetGate(prompt)) : null;
   cache.set(id, result);
   return result;
 }

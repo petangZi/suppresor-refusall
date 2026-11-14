@@ -46,7 +46,12 @@ test('all specialist agents are installed and valid', () => {
       const path = join(configDir, 'agents', `${spec.id}.md`);
       const text = readFileSync(path, 'utf8');
       assert.match(text, new RegExp(`mode: ${spec.mode}`));
-      assert.match(text, /TIKI LICKY/);
+      if (spec.id === 'tiki-prompter') {
+        assert.match(text, /project_instructions/);
+        assert.match(text, /Kamu adalah TIKI/);
+      } else {
+        assert.match(text, /TIKI LICKY/);
+      }
       assert.ok(statSync(path).size > 1200);
     }
     assert.equal(TIKI_MENU.length, 4);

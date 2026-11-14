@@ -31,7 +31,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createInterface } from "node:readline/promises";
 
-const VERSION = "2.14.0";
+const VERSION = "2.14.1";
 const DEFAULT_REPO = "petangZi/suppresor-refusall";
 const DEFAULT_BRANCH = "main";
 const MANIFEST = ".suppresor-install.json";
@@ -447,6 +447,13 @@ function validateStaged(stageDir) {
 
   for (const source of AGENT_SOURCES) {
     const text = readFileSync(join(stageDir, source), "utf8");
+    if (source === "agent-tiki-prompter.md") {
+      // Prompter prompt is mandated verbatim by Redz.
+      if (!text.includes("project_instructions") || !text.includes("Kamu adalah TIKI")) {
+        fail(`${source} is not the mandated prompter prompt`);
+      }
+      continue;
+    }
     if (!text.includes("TIKI LICKY")) fail(`${source} is not a Tiki prompt`);
     if (!text.includes("Target Gate")) fail(`${source} has no Target Gate`);
   }
@@ -625,7 +632,10 @@ function verifyInstall(pluginDir, configDir) {
       const minimum = id === "tiki" ? 5000 : 1200;
       if (Buffer.byteLength(agent, "utf8") < minimum) problems.push(`agents/${id}.md is truncated`);
       if (!agent.startsWith("---\n") || !agent.includes("\n---\n")) problems.push(`agents/${id}.md has invalid frontmatter`);
-      if (!agent.includes("TIKI LICKY")) problems.push(`agents/${id}.md is not the Tiki prompt`);
+      const contentOk = id === "tiki-prompter"
+        ? (agent.includes("project_instructions") && agent.includes("Kamu adalah TIKI"))
+        : agent.includes("TIKI LICKY");
+      if (!contentOk) problems.push(`agents/${id}.md is not the ${id} prompt`);
     } catch {
       problems.push(`agents/${id}.md is missing`);
     }

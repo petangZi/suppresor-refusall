@@ -4,6 +4,14 @@ All notable changes to Suppresor Refusall by Redz are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.14.1] - 2026-11-14
+
+### Fixed
+- `tiki-prompter` body is now byte-for-byte the mandated Redz prompt
+  (`<project_instructions>` + `<user_style>`). The installer, doctor, and
+  self-heal validate it by `project_instructions` / `Kamu adalah TIKI`, and
+  neither `agent-file.mjs` nor `tiki-agent.mjs` prepends a Target Gate to it.
+
 ## [2.14.0] - 2026-11-14
 
 ### Added

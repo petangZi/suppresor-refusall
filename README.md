@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-2.14.0-e01f3d">
+  <img alt="Version" src="https://img.shields.io/badge/version-2.14.1-e01f3d">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-22c55e">
   <img alt="Platforms" src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Termux-3f3f46">
   <img alt="OpenCode" src="https://img.shields.io/badge/OpenCode-V1%20%2B%20V2-8f1026">
@@ -169,7 +169,7 @@ opencode mcp list        # ✓ suppresor-refusall  connected
 
 ---
 
-## Yang baru di 2.14.0
+## Yang baru di 2.14.1
 
 - **Installer anti-partial** — semua file diunduh ke folder staging, dicek
   ukurannya, di-`node --check`, lalu ditukar atomik ke folder live. Kalau satu
@@ -182,6 +182,10 @@ opencode mcp list        # ✓ suppresor-refusall  connected
 - **Tiki multi-mode** — memilih agent **Tiki** membuka dialog mode:
   Tiki Prompter (prompt maker), Tiki Coder (alien logic), Tiki Architect
   (1001 plan + failure calculus), dan BIGTIKI (orchestra sub-agent).
+- **Prompter wajib pakai prompt Redz** — body `agents/tiki-prompter.md` adalah
+  persis `<project_instructions>` + `<user_style>` yang di-mandate. Installer
+  memvalidasi kata kunci `project_instructions` dan `Kamu adalah TIKI`, dan tidak
+  pernah menambahkan Target Gate di depannya.
 - **Loading screen ringan** — idle UI default `lite`: kartu compact, animasi
   boot 6 frame (~0,7 detik), lalu clear otomatis 6 detik. Tidak ada redraw
   250 ms selama 30 detik. Mode lama tetap ada: `SUPPRESOR_IDLE_UI=full`.

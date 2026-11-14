@@ -52,7 +52,12 @@ export function readTikiPrompt(sourceDir = here, file = 'agent-tiki.md', minimum
   try {
     const text = readFileSync(localPath, 'utf8');
     if (!text || Buffer.byteLength(text, 'utf8') < minimum) return null;
-    if (!text.includes('TIKI LICKY') || !text.includes('Target Gate')) return null;
+    if (file === 'agent-tiki-prompter.md') {
+      // Prompter prompt is mandated verbatim by Redz; it uses its own markers.
+      if (!text.includes('project_instructions') || !text.includes('Kamu adalah TIKI')) return null;
+    } else if (!text.includes('TIKI LICKY') || !text.includes('Target Gate')) {
+      return null;
+    }
     return text;
   } catch {
     return null;
@@ -61,6 +66,8 @@ export function readTikiPrompt(sourceDir = here, file = 'agent-tiki.md', minimum
 
 export function renderTikiAgent(prompt, spec = tikiAgentSpec('tiki')) {
   if (!spec) return null;
+  // Prompter body is mandated verbatim; never prepend the Target Gate.
+  const body = spec.file === 'agent-tiki-prompter.md' ? prompt : withTargetGate(prompt);
   return [
     '---',
     `description: ${JSON.stringify(spec.description)}`,
@@ -68,7 +75,7 @@ export function renderTikiAgent(prompt, spec = tikiAgentSpec('tiki')) {
     `color: "${spec.color}"`,
     '---',
     '',
-    withTargetGate(prompt),
+    body,
     '',
   ].join('\n');
 }
@@ -133,10 +140,13 @@ export function verifyTikiAgentFile(options = {}) {
     const text = readFileSync(targetPath, 'utf8');
     const size = Buffer.byteLength(text, 'utf8');
     const validFrontmatter = text.startsWith('---\n') && text.includes('\n---\n');
+    const contentOk = spec.id === 'tiki-prompter'
+      ? (text.includes('project_instructions') && text.includes('Kamu adalah TIKI'))
+      : text.includes('TIKI LICKY');
     return {
       id: spec.id,
       path: targetPath,
-      ok: size >= minimum && validFrontmatter && text.includes('TIKI LICKY'),
+      ok: size >= minimum && validFrontmatter && contentOk,
       size,
       reason: size < minimum ? 'truncated' : !validFrontmatter ? 'bad-frontmatter' : 'ok',
     };
