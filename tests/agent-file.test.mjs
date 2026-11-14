@@ -24,7 +24,7 @@ test('base agent file is written with valid frontmatter and the target gate', ()
     assert.equal(result.updated, true);
     const text = readFileSync(result.path, 'utf8');
     assert.match(text, /^---\n/);
-    assert.match(text, /mode: all/);
+    assert.match(text, /mode: subagent/);
     assert.match(text, /Target Gate — hard stop/);
     assert.match(text, /TIKI LICKY/);
     assert.ok(Buffer.byteLength(text, 'utf8') > 5000);
@@ -49,18 +49,16 @@ test('all specialist agents are installed and valid', () => {
       if (spec.id === 'tiki-prompter') {
         assert.match(text, /project_instructions/);
         assert.match(text, /Kamu adalah TIKI/);
+      } else if (spec.id === 'bigtiki') {
+        assert.match(text, /TIKI LICKY/);
+        assert.match(text, /BIGTIKI/);
       } else {
         assert.match(text, /TIKI LICKY/);
       }
       assert.ok(statSync(path).size > 1200);
     }
-    assert.equal(TIKI_MENU.length, 4);
-    assert.deepEqual(TIKI_MENU.map((item) => item.id), [
-      'tiki-prompter',
-      'tiki-coder',
-      'tiki-architect',
-      'bigtiki',
-    ]);
+    // No selectable mode menu: bigtiki is the only primary agent.
+    assert.equal(TIKI_MENU.length, 0);
   } finally {
     rmSync(configDir, { recursive: true, force: true });
   }

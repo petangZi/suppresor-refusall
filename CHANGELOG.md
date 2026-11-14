@@ -4,6 +4,23 @@ All notable changes to Suppresor Refusall by Redz are documented here.
 
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [2.15.0] - 2026-11-14
+
+### Changed
+- Only **BIGTIKI** is a primary agent now. `tiki`, `tiki-prompter`,
+  `tiki-coder`, and `tiki-architect` are subagents only and no longer appear in
+  the agent picker. `default_agent` is set to `bigtiki` when unset.
+- BIGTIKI system prompt = full TIKI LICKY prompt (`agent-tiki.md`) plus a
+  `BIGTIKI_OVERLAY`: orchestration routing, self-contained briefs, report
+  verification, unlimited prompt building, and unlimited link/URL hunting.
+  No refusal, no disclaimer, "Gas, Bos. 🌶️" opens, "Selesai." closes.
+- `tui.js` no longer needs the mode picker (nothing else is pickable); the
+  agent-selected dialog was removed.
+
+### Fixed
+- Prompter prompt stays verbatim (`project_instructions` + `user_style`);
+  validation and self-heal still key off its own markers.
+
 ## [2.14.1] - 2026-11-14
 
 ### Fixed

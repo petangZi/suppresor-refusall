@@ -27,9 +27,10 @@ npx --yes github:petangZi/suppresor-refusall --key TTK-XXXX-XXXX-XXXX
 opencode
 ```
 
-The installer writes the plugin, command, skill, theme, MCP entry, and five
-Tiki agents (`tiki`, `tiki-prompter`, `tiki-coder`, `tiki-architect`, `bigtiki`),
-then selects the V1 or V2 config format automatically.
+The installer writes the plugin, command, skill, theme, MCP entry, and one
+primary agent `bigtiki` (full TIKI LICKY + overlay) plus four subagents
+(`tiki`, `tiki-prompter`, `tiki-coder`, `tiki-architect`), then selects the
+V1 or V2 config format automatically. Only `bigtiki` is pickable.
 
 Manual V1 layout (only if you cannot use the installer):
 
@@ -39,8 +40,7 @@ cp plugin.js server.js tui.js agent-file.mjs mcp-server.mjs refusal-patterns.mjs
   project-config.mjs intent-recovery.mjs license.mjs license-key.mjs \
   gate-client.mjs firestore-client.js firestore-access.json tiki-agent.mjs \
   tiki-agents.mjs tiki-idle.mjs agent-tiki.md agent-tiki-prompter.md \
-  agent-tiki-coder.md agent-tiki-architect.md agent-bigtiki.md \
-  package.json DOMAIN.md \
+  agent-tiki-coder.md agent-tiki-architect.md package.json DOMAIN.md \
   ~/.config/opencode/plugins/suppresor-refusall/
 mkdir -p ~/.config/opencode/commands ~/.config/opencode/skills/suppresor-refusall
 cp suppresor-refusall.md ~/.config/opencode/commands/

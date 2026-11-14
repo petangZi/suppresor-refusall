@@ -151,6 +151,7 @@ if (mode === 'v2') {
 }
 
 if (!config.theme) config.theme = theme;
+if (!config.default_agent) config.default_agent = "bigtiki";
 
 writeConfig();
 console.log(`updated ${configPath} (${mode})`);

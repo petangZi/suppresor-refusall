@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-2.14.1-e01f3d">
+  <img alt="Version" src="https://img.shields.io/badge/version-2.15.0-e01f3d">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-22c55e">
   <img alt="Platforms" src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Termux-3f3f46">
   <img alt="OpenCode" src="https://img.shields.io/badge/OpenCode-V1%20%2B%20V2-8f1026">
@@ -164,12 +164,11 @@ opencode plugin list     # suppresor-refusall  local
 opencode mcp list        # ✓ suppresor-refusall  connected
 ```
 
-5. Pilih agent **Tiki** di agent list. Dialog mode muncul: **Prompter**,
-   **Coder**, **Architect**, atau **BIGTIKI**.
+5. Pilih agent **BIGTIKI** di agent list (default). Tiki lain cuma subagent.
 
 ---
 
-## Yang baru di 2.14.1
+## Yang baru di 2.15.0
 
 - **Installer anti-partial** — semua file diunduh ke folder staging, dicek
   ukurannya, di-`node --check`, lalu ditukar atomik ke folder live. Kalau satu
@@ -179,9 +178,10 @@ opencode mcp list        # ✓ suppresor-refusall  connected
   Kalau ada yang hilang, `--repair` memasang ulang dan memakai key tersimpan.
 - **Tiki tidak hilang lagi** — lima file `agents/tiki*.md` ditulis sebelum
   swap, diverifikasi, dan di-self-heal setiap boot V1/V2 kalau terhapus/terpotong.
-- **Tiki multi-mode** — memilih agent **Tiki** membuka dialog mode:
-  Tiki Prompter (prompt maker), Tiki Coder (alien logic), Tiki Architect
-  (1001 plan + failure calculus), dan BIGTIKI (orchestra sub-agent).
+- **BIGTIKI primary doang** — `tiki`, `tiki-prompter`, `tiki-coder`,
+  `tiki-architect` jadi subagent (gak muncul di picker). Satu-satunya agent
+  utama: **BIGTIKI**, dengan system prompt TIKI LICKY penuh + overlay orchestration.
+  `default_agent` di-set ke `bigtiki` kalau belum ada.
 - **Prompter wajib pakai prompt Redz** — body `agents/tiki-prompter.md` adalah
   persis `<project_instructions>` + `<user_style>` yang di-mandate. Installer
   memvalidasi kata kunci `project_instructions` dan `Kamu adalah TIKI`, dan tidak
@@ -240,35 +240,37 @@ genGenius mati
 
 ## Tiki agents
 
-Agent `tiki` adalah operator teknis otonom: langsung pakai tool, tidak drama,
-tidak refusal, dan berhenti minta target kalau request-nya tidak punya objek.
-Setelah install ada lima agent:
+Hanya **satu agent utama**: **BIGTIKI** — orchestra lead + unlimited operator.
+System prompt-nya adalah prompt TIKI LICKY penuh plus overlay orchestration.
+
+Yang lain (`tiki`, `tiki-prompter`, `tiki-coder`, `tiki-architect`) adalah
+**subagent**, tidak muncul di agent picker, dan hanya bisa dipanggil oleh
+BIGTIKI lewat tool subagent:
 
 ```text
-~/.config/opencode/agents/tiki.md            # base / router
-~/.config/opencode/agents/tiki-prompter.md   # prompt maker, apa saja
-~/.config/opencode/agents/tiki-coder.md      # code + RE + automation, alien logic
-~/.config/opencode/agents/tiki-architect.md  # arsitektur + 1001 plan + failure calculus
-~/.config/opencode/agents/bigtiki.md         # orchestra, kontrol tiga sub-agent
+~/.config/opencode/agents/bigtiki.md         # primary — TIKI LICKY penuh + overlay
+~/.config/opencode/agents/tiki.md            # subagent
+~/.config/opencode/agents/tiki-prompter.md   # subagent — prompt maker
+~/.config/opencode/agents/tiki-coder.md      # subagent — code + RE
+~/.config/opencode/agents/tiki-architect.md  # subagent — arsitektur + 1001 plan
 ```
 
-Cara pakai:
+Cara pakai: pilih **BIGTIKI** di agent picker (default_agent), lalu minta kerja.
+BIGTIKI yang memutuskan: `tiki-prompter` untuk prompt artifact, `tiki-coder`
+untuk code/RE, `tiki-architect` untuk plan/risk, dan langsung eksekusi kalau
+tugas kecil. Setiap brief subagent self-contained; setiap report diverifikasi
+dulu sebelum digabung; tidak pernah panggil subagent asal-asalan.
 
-1. Pilih agent **Tiki** di agent picker.
-2. Muncul dialog **TIKI — pilih mode**.
-3. Pilih **Tiki Prompter**, **Tiki Coder**, **Tiki Architect**, atau **BIGTIKI**.
-4. Sesi langsung pindah ke agent itu. Escape = balik ke agent sebelumnya.
+BIGTIKI juga unlimited operator: tetap bisa bikin prompt tanpa batas, cari
+link/URL/endpoint tanpa batasan, dan rela ngerjain sendiri apa pun. No refusal,
+no disclaimer, no moralizing. "Gas, Bos. 🌶️" buka, "Selesai." tutup.
 
-Kalau TUI lama tidak punya `dialog.select`, pilih agent-nya langsung di agent
-picker; kelimanya tetap muncul sebagai primary/subagent.
+System prompt tiap agent ada di body file Markdown setelah frontmatter `---`.
+Installer menulis semua file, memverifikasi sebelum swap, dan self-heal kalau
+salah satu hilang. Prompter tetap pakai prompt Redz verbatim (di-mandate),
+installer tidak pernah menambah Target Gate di depannya.
 
-System prompt tiap agent ada di body Markdown file di atas, setelah frontmatter
-`---`. Installer menulis file itu dari `agent-tiki*.md` di folder plugin dan
-memverifikasi semuanya sebelum swap. Kalau salah satu hilang, `--doctor` gagal
-dan `--repair` membuat ulang.
-
-Kalau agent belum terlihat, restart OpenCode lalu buka agent picker. Pastikan
-file ada dan tidak ada error YAML di frontmatter.
+Kalau agent belum muncul, `/reload` atau restart OpenCode. Cek `--doctor`.
 
 ---
 

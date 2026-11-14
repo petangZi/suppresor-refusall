@@ -8,8 +8,8 @@ this repository ships both:
 - `plugin.js` — the original V1 implementation.
 - `server.js` — a V2 server part that imports `plugin.js` and bridges its V1
   hooks onto the V2 API.
-- `tui.js` — a V2 TUI part for the startup toast, palette status command, and
-  Tiki mode picker (`session.agent.selected` -> `dialog.select` -> `session.switchAgent`).
+- `tui.js` — a V2 TUI part for the startup toast and palette status command.
+  The mode picker was removed: `bigtiki` is the only primary agent.
 
 The V2 files sit at the plugin directory root, which is the V2 local-plugin
 convention (`server`, `tui`, `rpc`; `.js` is accepted).
@@ -97,5 +97,5 @@ detects the OpenCode major version and writes the matching shape.
   theme.
 - `tiki` agent visible in `/api/agent`.
 - `tui.js` startup toast appears on TUI load.
-- Selecting the `tiki` agent opens the mode picker; choosing a mode switches the
-  session agent and leaves the previous agent reachable through Escape.
+- `bigtiki` is primary; `tiki`, `tiki-prompter`, `tiki-coder`, and
+  `tiki-architect` are subagents only, reachable through the subagent tool.

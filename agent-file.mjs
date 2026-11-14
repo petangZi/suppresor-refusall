@@ -64,6 +64,20 @@ export function readTikiPrompt(sourceDir = here, file = 'agent-tiki.md', minimum
   }
 }
 
+// Compose the final prompt body: base prompt plus the overlay for agents that
+// define one (BigTiki). Validation keeps the mandated prompter prompt intact.
+export function resolveAgentPrompt(sourceDir, spec) {
+  if (!spec) return null;
+  const minimum = spec.id === 'tiki' ? MIN_BASE_BYTES : 1200;
+  const prompt = readTikiPrompt(sourceDir, spec.file, minimum);
+  if (!prompt) return null;
+  if (spec.overlay) {
+    if (!prompt.includes('TIKI LICKY')) return null;
+    return `${prompt}\n\n${spec.overlay}`;
+  }
+  return prompt;
+}
+
 export function renderTikiAgent(prompt, spec = tikiAgentSpec('tiki')) {
   if (!spec) return null;
   // Prompter body is mandated verbatim; never prepend the Target Gate.
@@ -93,7 +107,7 @@ export function ensureTikiAgentFile(options = {}) {
   const targetPath = join(configDir, 'agents', `${spec.id}.md`);
   const minimum = spec.id === 'tiki' ? MIN_BASE_BYTES : 1200;
 
-  const prompt = readTikiPrompt(sourceDir, spec.file, minimum);
+  const prompt = resolveAgentPrompt(sourceDir, spec);
   if (!prompt) return { id: spec.id, path: null, updated: false, reason: 'prompt-missing' };
 
   try {
@@ -142,7 +156,9 @@ export function verifyTikiAgentFile(options = {}) {
     const validFrontmatter = text.startsWith('---\n') && text.includes('\n---\n');
     const contentOk = spec.id === 'tiki-prompter'
       ? (text.includes('project_instructions') && text.includes('Kamu adalah TIKI'))
-      : text.includes('TIKI LICKY');
+      : spec.id === 'bigtiki'
+        ? (text.includes('TIKI LICKY') && text.includes('BIGTIKI'))
+        : text.includes('TIKI LICKY');
     return {
       id: spec.id,
       path: targetPath,

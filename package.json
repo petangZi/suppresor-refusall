@@ -1,6 +1,6 @@
 {
   "name": "suppresor-refusall-by-redz",
-  "version": "2.14.1",
+  "version": "2.15.0",
   "description": "Suppresor Refusall by Redz — pure technical refusal suppression. Default ON, MCP server, project-level config with custom patterns, oc-themes, Firestore license gate, and an optional server-side entitlement/transform gateway with offline fallback.",
   "type": "module",
   "main": "plugin.js",
@@ -49,8 +49,7 @@
     "tiki-agents.mjs",
     "agent-tiki-prompter.md",
     "agent-tiki-coder.md",
-    "agent-tiki-architect.md",
-    "agent-bigtiki.md"
+    "agent-tiki-architect.md"
   ],
   "oc-themes": {
     "suppresor-red": "./themes/suppresor-red.json"

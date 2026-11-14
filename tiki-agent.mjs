@@ -4,7 +4,7 @@
 // different repository.
 // Invisible watermark: 0x54494b495445414d5245445445414d
 
-import { readTikiPrompt, withTargetGate } from './agent-file.mjs';
+import { resolveAgentPrompt, withTargetGate } from './agent-file.mjs';
 import { TIKI_AGENT_SPECS, tikiAgentSpec } from './tiki-agents.mjs';
 
 const RAW_URL = 'https://raw.githubusercontent.com/petangZi/BigBug/main/Agent.md';
@@ -29,7 +29,7 @@ export async function getTikiPrompt(id = 'tiki') {
   if (!spec) return null;
   if (cache.has(id)) return cache.get(id);
 
-  let prompt = readTikiPrompt(undefined, spec.file, id === 'tiki' ? 5000 : 1200);
+  let prompt = resolveAgentPrompt(undefined, spec);
   // A partial install must not look like a working install. The installer now
   // fails when the prompt is missing; this fallback is opt-in for development.
   if (!prompt && id === 'tiki' && !remoteFailed && process.env.SUPPRESOR_TIKI_REMOTE === '1') {

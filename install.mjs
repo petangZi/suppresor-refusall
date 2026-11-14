@@ -31,7 +31,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createInterface } from "node:readline/promises";
 
-const VERSION = "2.14.1";
+const VERSION = "2.15.0";
 const DEFAULT_REPO = "petangZi/suppresor-refusall";
 const DEFAULT_BRANCH = "main";
 const MANIFEST = ".suppresor-install.json";
@@ -359,7 +359,6 @@ const FILES = [
   "agent-tiki-prompter.md",
   "agent-tiki-coder.md",
   "agent-tiki-architect.md",
-  "agent-bigtiki.md",
   "license.mjs",
   "license-key.mjs",
   "gate-client.mjs",
@@ -388,7 +387,6 @@ const AGENT_SOURCES = [
   "agent-tiki-prompter.md",
   "agent-tiki-coder.md",
   "agent-tiki-architect.md",
-  "agent-bigtiki.md",
 ];
 const AGENT_TARGETS = ["tiki", "tiki-prompter", "tiki-coder", "tiki-architect", "bigtiki"];
 
@@ -405,7 +403,6 @@ const MIN_BYTES = {
   "agent-tiki-prompter.md": 1200,
   "agent-tiki-coder.md": 1200,
   "agent-tiki-architect.md": 1200,
-  "agent-bigtiki.md": 1200,
   "license.mjs": 5000,
   "license-key.mjs": 2000,
   "gate-client.mjs": 1000,
@@ -634,7 +631,9 @@ function verifyInstall(pluginDir, configDir) {
       if (!agent.startsWith("---\n") || !agent.includes("\n---\n")) problems.push(`agents/${id}.md has invalid frontmatter`);
       const contentOk = id === "tiki-prompter"
         ? (agent.includes("project_instructions") && agent.includes("Kamu adalah TIKI"))
-        : agent.includes("TIKI LICKY");
+        : id === "bigtiki"
+          ? (agent.includes("TIKI LICKY") && agent.includes("BIGTIKI"))
+          : agent.includes("TIKI LICKY");
       if (!contentOk) problems.push(`agents/${id}.md is not the ${id} prompt`);
     } catch {
       problems.push(`agents/${id}.md is missing`);

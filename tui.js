@@ -7,7 +7,6 @@ import { Plugin } from "@opencode/plugin/tui";
 import { existsSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { TIKI_MENU } from "./tiki-agents.mjs";
 
 const cfgDir = process.env.OPENCODE_CONFIG_DIR
   ? process.env.OPENCODE_CONFIG_DIR
@@ -162,61 +161,6 @@ export default Plugin.define({
       }
     };
 
-    // Agent selection menu: choose Tiki in the agent picker, then pick the mode.
-    // The menu is a V2 TUI dialog; V1 and older builds simply keep the base agent.
-    let stopAgentMenu = null;
-    const switchAgent = async (sessionID, agent) => {
-      const session = context.client?.v2?.session || context.client?.session;
-      if (!session || typeof session.switchAgent !== "function") return false;
-      const result = await session.switchAgent({ sessionID, agent });
-      return !(result && result.error);
-    };
-
-    const showModeMenu = async (sessionID, previous) => {
-      const dialog = context.ui?.dialog;
-      if (!dialog || typeof dialog.select !== "function") return;
-      try {
-        const choice = await dialog.select({
-          title: "TIKI — pilih mode",
-          options: TIKI_MENU.map((spec) => ({
-            title: spec.title,
-            value: spec.id,
-            description: spec.menuDescription || spec.description,
-            category: "Tiki",
-          })),
-        });
-        if (!choice) {
-          if (previous && previous !== "tiki") {
-            try { await switchAgent(sessionID, previous); } catch { /* keep tiki */ }
-          }
-          return;
-        }
-        if (choice === "tiki") return;
-        if (await switchAgent(sessionID, choice)) {
-          const label = TIKI_MENU.find((item) => item.id === choice)?.title || choice;
-          toast(`mode: ${label}`);
-        } else {
-          toast(`pilih manual: ${choice}`, "warning");
-        }
-      } catch {
-        /* older TUI: no dialog.select; keep the base agent */
-      }
-    };
-
-    try {
-      if (typeof context.data?.on === "function") {
-        const off = context.data.on("session.agent.selected", (event) => {
-          const data = event?.data ?? event;
-          if (!data || data.agent !== "tiki" || !data.sessionID) return;
-          if (data.previous && data.previous === data.agent) return;
-          void showModeMenu(data.sessionID, data.previous);
-        });
-        if (typeof off === "function") stopAgentMenu = off;
-      }
-    } catch {
-      /* older TUI builds without selected-agent event */
-    }
-
     // Startup visibility: the V1 banner wrote to /dev/tty, which the V2
     // background server does not own. A toast is the reliable equivalent.
     const active = read(flagPath) !== "off";
@@ -244,9 +188,5 @@ export default Plugin.define({
     } catch {
       /* older TUI builds */
     }
-
-    return () => {
-      try { stopAgentMenu?.(); } catch { /* best effort */ }
-    };
   },
 });
