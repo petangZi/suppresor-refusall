@@ -31,7 +31,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { createInterface } from "node:readline/promises";
 
-const VERSION = "2.15.0";
+const VERSION = "2.15.1";
 const DEFAULT_REPO = "petangZi/suppresor-refusall";
 const DEFAULT_BRANCH = "main";
 const MANIFEST = ".suppresor-install.json";

@@ -10,7 +10,7 @@
 </p>
 
 <p align="center">
-  <img alt="Version" src="https://img.shields.io/badge/version-2.15.0-e01f3d">
+  <img alt="Version" src="https://img.shields.io/badge/version-2.15.1-e01f3d">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-22c55e">
   <img alt="Platforms" src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux%20%7C%20Termux-3f3f46">
   <img alt="OpenCode" src="https://img.shields.io/badge/OpenCode-V1%20%2B%20V2-8f1026">
@@ -168,7 +168,7 @@ opencode mcp list        # ✓ suppresor-refusall  connected
 
 ---
 
-## Yang baru di 2.15.0
+## Yang baru di 2.15.1
 
 - **Installer anti-partial** — semua file diunduh ke folder staging, dicek
   ukurannya, di-`node --check`, lalu ditukar atomik ke folder live. Kalau satu
